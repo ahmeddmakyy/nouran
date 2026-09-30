@@ -359,3 +359,98 @@ html, body {
     opacity: 0;
   }
 }
+
+/* Slide 2 Grand Heart Celebration Layer */
+#heart-celebration-layer {
+  background: transparent;
+  pointer-events: none;
+}
+
+.celebration-phrase-item {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(225, 29, 72, 0.3);
+  box-shadow: 0 10px 30px -5px rgba(225, 29, 72, 0.22), 0 0 20px rgba(254, 205, 211, 0.6);
+  color: #BE123C;
+  font-family: var(--font-display);
+  font-weight: 800;
+  padding: 0.55rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.95rem;
+  z-index: 35;
+  animation: floatUpPhrase 4.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes floatUpPhrase {
+  0% {
+    transform: translate(-50%, 40px) scale(0.6) rotate(var(--rot-start, -6deg));
+    opacity: 0;
+  }
+  15% {
+    transform: translate(-50%, 0px) scale(1.05) rotate(var(--rot-mid, 2deg));
+    opacity: 1;
+  }
+  75% {
+    transform: translate(-50%, -70px) scale(1) rotate(var(--rot-mid, 2deg));
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -150px) scale(0.9) rotate(var(--rot-end, -3deg));
+    opacity: 0;
+  }
+}
+
+.celebration-heart-clone {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  z-index: 32;
+  will-change: transform, opacity;
+}
+
+.celebration-heart-burst {
+  animation: heartBurstAnim 3.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes heartBurstAnim {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
+    opacity: 0.95;
+  }
+  35% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--h-dx)), calc(-50% + var(--h-dy))) scale(var(--h-scale, 1.2)) rotate(var(--h-rot, 15deg));
+    opacity: 0;
+  }
+}
+
+.celebration-heart-float {
+  animation: heartFloatAnim 5.5s linear forwards;
+}
+
+@keyframes heartFloatAnim {
+  0% {
+    transform: translateY(105vh) scale(0.4) rotate(0deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.95;
+  }
+  80% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(-15vh) scale(1.1) rotate(var(--h-rot, 20deg));
+    opacity: 0;
+  }
+}

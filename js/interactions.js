@@ -25,11 +25,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 2. Next slide button in canvas
+  // 2. Next slide button in canvas & tap-to-spawn phrase in Slide 2
   const canvasNextBtn = document.getElementById('heart-next-slide-btn');
   if (canvasNextBtn && container) {
     canvasNextBtn.addEventListener('click', () => {
       container.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
+    });
+  }
+
+  const slideHeart = document.getElementById('slide-heart');
+  if (slideHeart) {
+    slideHeart.addEventListener('pointerdown', (e) => {
+      if (window.heartCanvas && window.heartCanvas.isUnlocked) {
+        const phrases = ["بحبك ❤️", "خلاص بقى اتصالحي 🥺", "بموت فيكي 🥰", "وحشتيني أوي أوي أوي 🫂", "وحشتيني 💖"];
+        const p = phrases[Math.floor(Math.random() * phrases.length)];
+        const layer = document.getElementById('heart-celebration-layer');
+        if (layer) {
+          const phraseEl = document.createElement('div');
+          phraseEl.className = 'celebration-phrase-item';
+          phraseEl.textContent = p;
+          phraseEl.style.left = `${e.clientX}px`;
+          phraseEl.style.top = `${e.clientY}px`;
+          layer.appendChild(phraseEl);
+          setTimeout(() => phraseEl.remove(), 4900);
+        }
+      }
     });
   }
 

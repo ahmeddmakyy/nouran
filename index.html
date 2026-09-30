@@ -107,20 +107,20 @@
     </section>
 
     <!-- SLIDE 2: Interactive Heart Drawing -->
-    <section class="story-slide text-center">
+    <section class="story-slide text-center relative" id="slide-heart">
       <h2 class="text-2xl sm:text-3xl font-bold font-display text-stone-900 mb-2">
         ارسمي ب صباعك يا مزة
       </h2>
 
-      <p id="heart-hint-text" class="text-stone-600 text-xs sm:text-sm mb-5 font-medium">
-        حركي صباعك على النقط المنورة وكملي رسمة القلب
+      <p id="heart-hint-text" class="text-stone-600 text-xs sm:text-sm mb-4 font-medium transition-all">
+        وصلي النقط ببعض عشان تفتحي القلب ❤️
       </p>
 
-      <div class="canvas-container mb-4">
+      <div class="canvas-container mb-4 relative">
         <canvas id="heart-canvas"></canvas>
       </div>
 
-      <button id="heart-next-slide-btn" class="hidden px-6 py-2.5 rounded-full bg-rose-600 text-white font-bold text-xs shadow-md transition-all active:scale-95">
+      <button id="heart-next-slide-btn" class="hidden px-6 py-2.5 rounded-full bg-rose-600 text-white font-bold text-xs shadow-md transition-all active:scale-95 relative z-20">
         شوفي ذكرياتنا سوا ⬅️
       </button>
 
@@ -128,6 +128,9 @@
         <span>اسحبي للذكريات</span>
         <span>👆</span>
       </div>
+
+      <!-- Grand Heart Celebration Layer (Repeated Hearts & Flying Phrases) -->
+      <div id="heart-celebration-layer" class="hidden fixed inset-0 pointer-events-none z-30 overflow-hidden"></div>
     </section>
 
     <!-- SLIDE 3: Polaroid Photo Memories -->
