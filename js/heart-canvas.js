@@ -32,8 +32,8 @@ class HeartCanvas {
     this.canvas.height = this.height * dpr;
     this.ctx.scale(dpr, dpr);
 
-    this.center = { x: this.width / 2, y: this.height / 2 + 5 };
-    this.scale = this.width / 34;
+    this.center = { x: this.width / 2, y: this.height / 2 - 8 };
+    this.scale = this.width / 37;
   }
 
   generateGuide() {
@@ -89,10 +89,16 @@ class HeartCanvas {
     this.canvas.addEventListener('touchstart', start, { passive: false });
     window.addEventListener('touchmove', move, { passive: false });
     window.addEventListener('touchend', end);
+
+    const container = this.canvas.parentElement;
+    if (container) {
+      container.addEventListener('mousedown', start);
+      container.addEventListener('touchstart', start, { passive: false });
+    }
   }
 
   checkPoints(pos) {
-    const threshold = 34;
+    const threshold = 32;
     this.heartGuidePoints.forEach(pt => {
       const dist = Math.hypot(pt.x - pos.x, pt.y - pos.y);
       if (dist < threshold) {
@@ -100,15 +106,33 @@ class HeartCanvas {
       }
     });
 
-    const percent = Math.round((this.coveredPoints.size / this.heartGuidePoints.length) * 100);
+    const leftPoints = this.heartGuidePoints.filter(p => p.x < this.center.x - 3);
+    const rightPoints = this.heartGuidePoints.filter(p => p.x > this.center.x + 3);
 
-    if (percent >= 60 && !this.isUnlocked) {
+    let leftCovered = 0;
+    let rightCovered = 0;
+
+    this.coveredPoints.forEach(id => {
+      const pt = this.heartGuidePoints[id];
+      if (pt.x < this.center.x - 3) leftCovered++;
+      else if (pt.x > this.center.x + 3) rightCovered++;
+    });
+
+    const leftRatio = leftCovered / leftPoints.length;
+    const rightRatio = rightCovered / rightPoints.length;
+    const totalRatio = this.coveredPoints.size / this.heartGuidePoints.length;
+
+    // Both left and right lobes must be at least 75% covered - prevents premature completion on half heart
+    if (leftRatio >= 0.75 && rightRatio >= 0.75 && totalRatio >= 0.78 && !this.isUnlocked) {
       this.onComplete();
     }
   }
 
   onComplete() {
     this.isUnlocked = true;
+    if (window.soundEngine) {
+      window.soundEngine.playFanfare();
+    }
     if (this.hintEl) {
       this.hintEl.innerHTML = '<span class="text-rose-600 font-bold">القلب ده ليكي لوحدك يا نينو ❤️</span>';
     }

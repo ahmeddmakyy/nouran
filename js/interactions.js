@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 3. Evasive "لسه زعلانة" Button
+  // 3. Evasive "لسه زعلانة" Button - Fullscreen roaming & mouse proximity fleeing
   const evasiveBtn = document.getElementById('evasive-btn');
   const remarks = [
     "طب عشان خاطري أنا؟ 🥺",
@@ -41,31 +41,102 @@ document.addEventListener('DOMContentLoaded', () => {
     "طب بسبوسة وكيكة؟ 😋",
     "طب يا بنتي بطلي غلاسة بقى! 😂",
     "الزرار ده هربان أصلاً! 🏃‍♂️💨",
+    "مش هتعرفي تدوسي عليا 😜",
     "مفيش مفر.. دوسي صافية لبن ❤️"
   ];
   let remarkIdx = 0;
+  let isEscaped = false;
+  let lastDodgeTime = 0;
 
-  function dodge(e) {
-    if (!evasiveBtn) return;
-    if (e) e.preventDefault();
+  function dodge(cursorX = null, cursorY = null) {
+    if (!evasiveBtn || evasiveBtn.style.display === 'none') return;
 
-    const parent = evasiveBtn.parentElement;
-    const pRect = parent.getBoundingClientRect();
+    if (window.soundEngine) {
+      window.soundEngine.playPop();
+    }
 
-    const moveX = (Math.random() - 0.5) * Math.min(pRect.width * 0.7, 180);
-    const moveY = (Math.random() - 0.5) * 80;
+    const btnWidth = evasiveBtn.offsetWidth || 180;
+    const btnHeight = evasiveBtn.offsetHeight || 44;
 
-    evasiveBtn.style.transform = `translate(${moveX}px, ${moveY}px)`;
+    // Viewport bounds with safe margins
+    const marginX = 24;
+    const marginTop = 75; // Avoid floating audio dock
+    const marginBottom = 40;
+
+    const maxX = Math.max(marginX, window.innerWidth - btnWidth - marginX);
+    const maxY = Math.max(marginTop, window.innerHeight - btnHeight - marginBottom);
+
+    let newX, newY;
+    let attempts = 0;
+
+    // Pick a position across the whole screen far from cursor
+    do {
+      newX = marginX + Math.random() * (maxX - marginX);
+      newY = marginTop + Math.random() * (maxY - marginTop);
+      attempts++;
+      if (cursorX === null || cursorY === null) break;
+      const dist = Math.hypot(newX + btnWidth / 2 - cursorX, newY + btnHeight / 2 - cursorY);
+      if (dist > 180) break;
+    } while (attempts < 20);
+
+    if (!isEscaped) {
+      isEscaped = true;
+      evasiveBtn.classList.remove('w-full');
+      evasiveBtn.style.position = 'fixed';
+      evasiveBtn.style.zIndex = '35';
+      evasiveBtn.style.width = 'max-content';
+      evasiveBtn.style.maxWidth = '280px';
+      evasiveBtn.style.boxShadow = '0 12px 28px -4px rgba(0, 0, 0, 0.22)';
+    }
+
+    evasiveBtn.style.transition = 'left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.28s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    evasiveBtn.style.left = `${newX}px`;
+    evasiveBtn.style.top = `${newY}px`;
+    evasiveBtn.style.transform = `rotate(${(Math.random() - 0.5) * 16}deg)`;
 
     remarkIdx = (remarkIdx + 1) % remarks.length;
     const txt = evasiveBtn.querySelector('.btn-text');
     if (txt) txt.textContent = remarks[remarkIdx];
   }
 
+  // Laptop/Desktop mouse proximity detection: mouse can NEVER touch the button
+  window.addEventListener('mousemove', (e) => {
+    if (!evasiveBtn || evasiveBtn.style.display === 'none') return;
+
+    // Check if Slide 5 is visible
+    const slide5 = document.getElementById('slide-finale');
+    if (!slide5) return;
+    const sRect = slide5.getBoundingClientRect();
+    if (sRect.bottom < window.innerHeight * 0.3 || sRect.top > window.innerHeight * 0.7) {
+      return;
+    }
+
+    const bRect = evasiveBtn.getBoundingClientRect();
+    const btnCenterX = bRect.left + bRect.width / 2;
+    const btnCenterY = bRect.top + bRect.height / 2;
+    const dist = Math.hypot(e.clientX - btnCenterX, e.clientY - btnCenterY);
+
+    const now = Date.now();
+    // Dodge when mouse gets within 110px!
+    if (dist < 110 && (now - lastDodgeTime > 120)) {
+      lastDodgeTime = now;
+      dodge(e.clientX, e.clientY);
+    }
+  });
+
   if (evasiveBtn) {
-    evasiveBtn.addEventListener('mouseenter', dodge);
-    evasiveBtn.addEventListener('touchstart', dodge, { passive: false });
-    evasiveBtn.addEventListener('click', dodge);
+    evasiveBtn.addEventListener('mouseenter', (e) => dodge(e.clientX, e.clientY));
+    evasiveBtn.addEventListener('mouseover', (e) => dodge(e.clientX, e.clientY));
+    evasiveBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      dodge(touch ? touch.clientX : null, touch ? touch.clientY : null);
+    }, { passive: false });
+    evasiveBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      dodge(e.clientX, e.clientY);
+    });
+    evasiveBtn.addEventListener('focus', () => dodge());
   }
 
   // 4. Apple Emojis Flying Everywhere Finale
@@ -138,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (forgiveBtn) {
     forgiveBtn.addEventListener('click', () => {
-      // 1. Hide the decision card completely - no text on the final screen!
+      // 1. Hide the decision card and evasive button completely
       if (decisionCard) {
         decisionCard.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
         decisionCard.style.transform = 'scale(0.8) translateY(-20px)';
@@ -146,6 +217,9 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
           decisionCard.style.display = 'none';
         }, 500);
+      }
+      if (evasiveBtn) {
+        evasiveBtn.style.display = 'none';
       }
 
       // 2. Show the Apple emojis layer
@@ -169,17 +243,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      // Also trigger canvas confetti
+      // Also trigger victory chime & canvas confetti
+      if (window.soundEngine) {
+        window.soundEngine.playFanfare();
+      }
       if (window.confetti) {
         window.confetti({ particleCount: 70, spread: 80, origin: { y: 0.5 } });
       }
     });
   }
 
-  // 5. Instant Audio Autoplay
+  // 5. Instant Audio Autoplay - fires on first touch/interaction or instantly if allowed
   const audio = document.getElementById('bg-music');
   const tryPlayAudio = () => {
     if (audio && audio.paused) {
+      audio.volume = 1.0;
       audio.play().then(() => {
         if (window.musicPlayer) {
           window.musicPlayer.isPlaying = true;
@@ -192,7 +270,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   tryPlayAudio();
-  window.addEventListener('click', tryPlayAudio, { once: true });
-  window.addEventListener('touchstart', tryPlayAudio, { once: true });
-  window.addEventListener('scroll', tryPlayAudio, { once: true });
+  const touchEvents = ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'click', 'scroll', 'keydown'];
+  touchEvents.forEach(evt => {
+    window.addEventListener(evt, tryPlayAudio, { capture: true, once: true });
+    document.addEventListener(evt, tryPlayAudio, { capture: true, once: true });
+  });
 });

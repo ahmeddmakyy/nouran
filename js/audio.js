@@ -176,10 +176,22 @@ class MusicPlayer {
     ];
 
     this.initEvents();
+    this.play();
   }
 
   initEvents() {
     if (!this.audio) return;
+
+    // Keep UI in sync with actual audio state regardless of who triggered playback
+    this.audio.addEventListener('play', () => {
+      this.isPlaying = true;
+      this.updateUI();
+    });
+
+    this.audio.addEventListener('pause', () => {
+      this.isPlaying = false;
+      this.updateUI();
+    });
 
     if (this.playBtn) {
       this.playBtn.addEventListener('click', () => {

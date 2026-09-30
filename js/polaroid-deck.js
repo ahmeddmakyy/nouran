@@ -18,7 +18,7 @@ class PolaroidDeck {
     this.resetBtn = document.getElementById('polaroid-reset-btn');
     this.counterBadge = document.getElementById('polaroid-counter');
 
-    this.rotations = [-2.5, 3, -1.8, 2.2, -0.5];
+    this.rotations = [-2.5, 3, -1.8, 2.2, -1.5, 2.8];
 
     this.initStack();
     this.bindEvents();
