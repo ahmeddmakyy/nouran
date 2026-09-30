@@ -554,8 +554,234 @@ class SpecialSoundPlayer {
   }
 }
 
+// Slide 1 Revenge Player (Interactive Ahmed Punch & Sound Note)
+class RevengePlayer {
+  constructor() {
+    this.audio = document.getElementById('revenge-sound');
+    this.stage = document.getElementById('revenge-stage');
+    this.standingImg = document.getElementById('ahmed-standing-img');
+    this.cryingImg = document.getElementById('ahmed-crying-img');
+    this.speechBubble = document.getElementById('revenge-speech-bubble');
+    this.hitBtn = document.getElementById('revenge-hit-btn');
+    this.btnText = document.getElementById('revenge-btn-text');
+    this.nextBtn = document.getElementById('revenge-next-btn');
+    this.tapPrompt = document.getElementById('revenge-tap-prompt');
+    this.title = document.getElementById('revenge-title');
+    this.tearsLayer = document.getElementById('revenge-tears-layer');
+
+    this.isPlaying = false;
+    this.wasBgMusicPlaying = false;
+    this.hitCount = 0;
+    this.lastHitTime = 0;
+
+    this.initEvents();
+  }
+
+  initEvents() {
+    if (!this.stage && !this.hitBtn) return;
+
+    if (this.audio) {
+      try {
+        this.audio.load();
+      } catch (e) {}
+    }
+
+    const handleHit = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      const now = Date.now();
+      if (now - this.lastHitTime < 280) return; // Debounce 280ms
+      this.lastHitTime = now;
+      this.triggerHit();
+    };
+
+    if (this.stage) {
+      this.stage.addEventListener('click', handleHit);
+      this.stage.addEventListener('touchend', handleHit);
+    }
+
+    if (this.hitBtn) {
+      this.hitBtn.addEventListener('click', handleHit);
+      this.hitBtn.addEventListener('touchend', handleHit);
+    }
+
+    if (this.nextBtn) {
+      this.nextBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const container = document.querySelector('.story-container');
+        if (container) {
+          container.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
+        }
+      });
+    }
+
+    if (this.audio) {
+      this.audio.addEventListener('ended', () => {
+        this.handleEnded();
+      });
+    }
+  }
+
+  triggerHit() {
+    this.hitCount++;
+
+    // 1. Comic impact punch sound
+    if (window.soundEngine) {
+      window.soundEngine.playStamp();
+    }
+
+    // 2. Shake animation
+    const activeImg = (!this.cryingImg || this.cryingImg.classList.contains('hidden')) ? this.standingImg : this.cryingImg;
+    if (activeImg) {
+      activeImg.classList.remove('punch-shake');
+      void activeImg.offsetWidth;
+      activeImg.classList.add('punch-shake');
+    }
+
+    // 3. Switch to Crying Ahmed
+    if (this.standingImg && this.cryingImg) {
+      this.standingImg.classList.add('hidden');
+      this.cryingImg.classList.remove('hidden');
+    }
+
+    if (this.speechBubble) {
+      this.speechBubble.classList.remove('hidden');
+      const phrases = [
+        "أنا عملت إيه بس؟! 😭💔",
+        "حراااام عليكي يا نينو! 🥺",
+        "طب اضربي تاني لو هترتاحي 🤕",
+        "والله بحبك ومقدرش على زعلك 😭❤️"
+      ];
+      this.speechBubble.textContent = phrases[(this.hitCount - 1) % phrases.length];
+    }
+
+    if (this.title) {
+      this.title.innerHTML = 'يا نهار أبيض.. هونت عليكي؟! 😭💔';
+    }
+
+    if (this.tapPrompt) {
+      this.tapPrompt.classList.add('hidden');
+    }
+
+    if (this.btnText) {
+      this.btnText.textContent = 'اضربي تاني لو لسه زعلانة 🥊';
+    }
+
+    if (this.nextBtn) {
+      this.nextBtn.classList.remove('hidden');
+    }
+
+    // 4. Particle tear burst
+    this.spawnTears();
+
+    // 5. Play revenge audio
+    this.playAudio();
+  }
+
+  spawnTears() {
+    if (!this.tearsLayer) return;
+    const icons = ['💧', '😭', '💔', '💦', '🥺'];
+    for (let i = 0; i < 14; i++) {
+      const drop = document.createElement('div');
+      drop.className = 'tear-drop-particle';
+      drop.textContent = icons[Math.floor(Math.random() * icons.length)];
+      drop.style.left = `${30 + Math.random() * 40}%`;
+      drop.style.top = `${25 + Math.random() * 30}%`;
+
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 60 + Math.random() * 100;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist + 50;
+
+      drop.style.setProperty('--dx', `${dx}px`);
+      drop.style.setProperty('--dy', `${dy}px`);
+      this.tearsLayer.appendChild(drop);
+      setTimeout(() => drop.remove(), 1600);
+    }
+  }
+
+  playAudio() {
+    if (!this.audio) return;
+
+    // Pause background music safely
+    const bgAudio = document.getElementById('bg-music');
+    if (bgAudio && !bgAudio.paused) {
+      this.wasBgMusicPlaying = true;
+      try {
+        if (window.musicPlayer) {
+          window.musicPlayer.pause();
+        } else {
+          bgAudio.pause();
+        }
+      } catch (e) {}
+    } else {
+      this.wasBgMusicPlaying = true;
+    }
+
+    try {
+      this.audio.currentTime = 0;
+    } catch (e) {}
+
+    const playPromise = this.audio.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        this.isPlaying = true;
+      }).catch(err => {
+        console.log("Revenge audio playback prevented:", err);
+      });
+    } else {
+      this.isPlaying = true;
+    }
+  }
+
+  pause(resumeBg = true) {
+    if (this.audio) {
+      try {
+        this.audio.pause();
+      } catch (e) {}
+    }
+    this.isPlaying = false;
+
+    if (resumeBg && this.wasBgMusicPlaying) {
+      const bgAudio = document.getElementById('bg-music');
+      if (bgAudio) {
+        try {
+          if (window.musicPlayer) {
+            window.musicPlayer.play();
+          } else {
+            bgAudio.play().catch(() => {});
+          }
+        } catch (e) {}
+      }
+      this.wasBgMusicPlaying = false;
+    }
+  }
+
+  handleEnded() {
+    this.isPlaying = false;
+
+    // Automatically resume main background music
+    if (this.wasBgMusicPlaying) {
+      const bgAudio = document.getElementById('bg-music');
+      if (bgAudio) {
+        try {
+          if (window.musicPlayer) {
+            window.musicPlayer.play();
+          } else {
+            bgAudio.play().catch(() => {});
+          }
+        } catch (e) {}
+      }
+      this.wasBgMusicPlaying = false;
+    }
+  }
+}
+
 window.soundEngine = new SoundEngine();
 document.addEventListener('DOMContentLoaded', () => {
   window.musicPlayer = new MusicPlayer();
   window.specialSoundPlayer = new SpecialSoundPlayer();
+  window.revengePlayer = new RevengePlayer();
 });

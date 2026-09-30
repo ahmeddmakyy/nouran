@@ -41,6 +41,11 @@
     <source src="assets/audio/dy-ny-hbk-dy-ny.mp3" type="audio/mpeg">
   </audio>
 
+  <!-- Revenge Sound Audio Element -->
+  <audio id="revenge-sound" src="assets/audio/n-mlt-yh.mp3" preload="auto" playsinline webkit-playsinline>
+    <source src="assets/audio/n-mlt-yh.mp3" type="audio/mpeg">
+  </audio>
+
   <!-- Minimal Audio Player Dock (Top Right) -->
   <div class="minimal-audio-dock">
     <div class="mini-vinyl" id="vinyl-disc">
@@ -59,7 +64,8 @@
 
   <!-- Side Navigation Dots -->
   <div class="slide-dots">
-    <div class="slide-dot active" title="البداية"></div>
+    <div class="slide-dot active" title="الانتقام"></div>
+    <div class="slide-dot" title="البداية"></div>
     <div class="slide-dot" title="القلب"></div>
     <div class="slide-dot" title="الذكريات"></div>
     <div class="slide-dot" title="الألقاب"></div>
@@ -70,8 +76,62 @@
   <!-- Fullscreen Snap Stories Container -->
   <div class="story-container">
 
-    <!-- SLIDE 1: Intro & Relationship Counter -->
-    <section class="story-slide text-center">
+    <!-- SLIDE 1: Interactive Revenge Screen -->
+    <section class="story-slide text-center relative" id="slide-revenge">
+      <div class="mb-2">
+        <span class="pixel-badge">لو زعلانة مني 🥺💔</span>
+      </div>
+
+      <h1 id="revenge-title" class="text-2xl sm:text-3xl font-bold font-display text-stone-900 mb-1 tracking-tight">
+        لو حابة تنتقمي.. دوسي عليا 🥺
+      </h1>
+
+      <p id="revenge-subtitle" class="text-stone-600 text-xs sm:text-sm max-w-xs mx-auto mb-2 font-medium">
+        مستعد لأي عقاب يا نينو.. اضربي براحتك هنا 🤏
+      </p>
+
+      <!-- Character Visual Stage -->
+      <div id="revenge-stage" class="revenge-stage relative mx-auto my-1 cursor-pointer select-none max-w-xs flex items-center justify-center">
+        <!-- Ahmed Standing (Default) -->
+        <img id="ahmed-standing-img" src="assets/images/ahmed_standing.png" alt="أحمد" class="revenge-character-img max-h-[44vh] sm:max-h-[48vh] object-contain drop-shadow-md transition-all duration-200">
+
+        <!-- Ahmed Crying (Revealed after hit) -->
+        <img id="ahmed-crying-img" src="assets/images/ahmed_crying.png" alt="أحمد بيعيط" class="revenge-character-img hidden max-h-[44vh] sm:max-h-[48vh] object-contain drop-shadow-xl transition-all duration-200">
+
+        <!-- Floating Comic Speech Bubble -->
+        <div id="revenge-speech-bubble" class="speech-bubble hidden absolute top-2 right-1/2 translate-x-1/2 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-xl border border-rose-300 text-xs sm:text-sm font-extrabold text-rose-700 whitespace-nowrap z-20">
+          أنا عملت إيه بس؟! 😭💔
+        </div>
+
+        <!-- Floating Tap Indicator -->
+        <div id="revenge-tap-prompt" class="revenge-tap-indicator absolute bottom-4 left-1/2 -translate-x-1/2 bg-rose-600/90 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 whitespace-nowrap animate-bounce pointer-events-none z-10">
+          <span>اضغطي عليا عشان تنتقمي 🥊</span>
+        </div>
+
+        <!-- Tears / Splash Particle Layer -->
+        <div id="revenge-tears-layer" class="absolute inset-0 pointer-events-none overflow-hidden z-30"></div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="mt-2 flex items-center justify-center gap-2.5 z-20 relative">
+        <button id="revenge-hit-btn" class="px-5 py-2.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer">
+          <span>🥊</span>
+          <span id="revenge-btn-text">دوسي عليا وانتقمي 🥺</span>
+        </button>
+
+        <button id="revenge-next-btn" class="hidden px-5 py-2.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs sm:text-sm border border-stone-200 shadow-sm transition-all active:scale-95 cursor-pointer">
+          كفاية كدا.. شوفي اللي بعده 🤍
+        </button>
+      </div>
+
+      <div class="swipe-up-hint">
+        <span>اسحبي للبداية</span>
+        <span>👆</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: Intro & Relationship Counter -->
+    <section class="story-slide text-center" id="slide-hero">
       <h1 class="text-3xl sm:text-4xl font-bold font-display text-stone-900 mb-3 tracking-tight">
         كل ثانية معاكي بتسوى الدنيا
       </h1>
@@ -139,8 +199,8 @@
       <div id="heart-celebration-layer" class="hidden absolute inset-0 pointer-events-none z-20 overflow-hidden"></div>
     </section>
 
-    <!-- SLIDE 3: Polaroid Photo Memories -->
-    <section class="story-slide text-center">
+    <!-- SLIDE 4: Polaroid Photo Memories -->
+    <section class="story-slide text-center" id="slide-polaroids">
       <div class="mb-3">
         <span class="pixel-badge">أيامنا الحلوة ☕</span>
       </div>
@@ -248,8 +308,8 @@
       </div>
     </section>
 
-    <!-- SLIDE 4: The 3 Nicknames -->
-    <section class="story-slide text-center">
+    <!-- SLIDE 5: The 3 Nicknames -->
+    <section class="story-slide text-center" id="slide-nicknames">
       <div class="mb-4">
         <span class="pixel-badge">دلعك عندي ❤️</span>
       </div>

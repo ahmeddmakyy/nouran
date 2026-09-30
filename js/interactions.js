@@ -23,21 +23,33 @@ document.addEventListener('DOMContentLoaded', () => {
         else d.classList.remove('active');
       });
 
-      // Slide 2 celebration interval management - only run when user is on Slide 2
-      if (window.heartCanvas) {
-        if (index === 1) {
+      // Slide Heart celebration interval management - only run when user is on Slide Heart
+      const slideHeart = document.getElementById('slide-heart');
+      if (slideHeart && window.heartCanvas) {
+        const hRect = slideHeart.getBoundingClientRect();
+        const isHeartVisible = (hRect.top < window.innerHeight * 0.6 && hRect.bottom > window.innerHeight * 0.4);
+        if (isHeartVisible) {
           window.heartCanvas.resumeCelebration();
         } else {
           window.heartCanvas.pauseCelebration();
         }
       }
 
-      // If user scrolls away from Slide 5 while special sound is playing, pause it and resume bg music!
+      // If user scrolls away from Slide Sound while special sound is playing, pause it and resume bg music!
       const slideSound = document.getElementById('slide-sound');
       if (slideSound && window.specialSoundPlayer && window.specialSoundPlayer.isPlaying) {
         const sRect = slideSound.getBoundingClientRect();
         if (sRect.bottom < 80 || sRect.top > window.innerHeight - 80) {
           window.specialSoundPlayer.pause(true);
+        }
+      }
+
+      // If user scrolls away from Slide Revenge while revenge sound is playing, pause it and resume bg music!
+      const slideRevenge = document.getElementById('slide-revenge');
+      if (slideRevenge && window.revengePlayer && window.revengePlayer.isPlaying) {
+        const rRect = slideRevenge.getBoundingClientRect();
+        if (rRect.bottom < 80 || rRect.top > window.innerHeight - 80) {
+          window.revengePlayer.pause(true);
         }
       }
     });
