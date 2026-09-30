@@ -1,7 +1,81 @@
+// Haptics helper
+window.haptics = function(ms = 20) {
+  try {
+    if (navigator.vibrate) navigator.vibrate(ms);
+  } catch (e) {}
+};
+
 // Slide-based navigation, Evasive button, Apple Emojis Explosion, and Instant Audio
 document.addEventListener('DOMContentLoaded', () => {
   const container = document.querySelector('.story-container');
   const dots = document.querySelectorAll('.slide-dot');
+
+  // 0. Global: reveal on scroll + progress + ambient hearts
+  const slides = document.querySelectorAll('.story-slide');
+  const progressFill = document.getElementById('story-progress-fill');
+  const ambientBox = document.getElementById('ambient-hearts');
+
+  if ('IntersectionObserver' in window && slides.length) {
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach(en => {
+        if (en.isIntersecting) {
+          en.target.classList.add('visible');
+          // trigger counter count-up once
+          if (en.target.id === 'slide-hero' && window.relationshipCounter && !window.relationshipCounter.counted) {
+            window.relationshipCounter.countUp();
+          }
+        }
+      });
+    }, { root: container, threshold: 0.45 });
+    slides.forEach(s => revealObs.observe(s));
+  } else {
+    slides.forEach(s => s.classList.add('visible'));
+  }
+
+  // Progress bar + dots update on scroll (merged with existing handler below)
+  function updateProgress() {
+    if (!container || !progressFill) return;
+    const max = container.scrollHeight - container.clientHeight;
+    const p = max > 0 ? (container.scrollTop / max) * 100 : 0;
+    progressFill.style.width = `${p}%`;
+  }
+
+  // Ambient hearts (lightweight, pooled)
+  if (ambientBox) {
+    const icons = ['❤️', '💖', '✨', '🌸', '💕'];
+    for (let i = 0; i < 10; i++) {
+      const h = document.createElement('div');
+      h.className = 'ambient-heart';
+      h.textContent = icons[i % icons.length];
+      h.style.left = `${Math.random() * 92}%`;
+      h.style.fontSize = `${12 + Math.random() * 18}px`;
+      h.style.animationDuration = `${9 + Math.random() * 9}s`;
+      h.style.animationDelay = `${Math.random() * 9}s`;
+      ambientBox.appendChild(h);
+    }
+  }
+
+  // 0b. Nicknames tap: bounce + flying emoji + haptic
+  document.querySelectorAll('.nickname-item').forEach(card => {
+    card.addEventListener('click', () => {
+      window.haptics(15);
+      if (window.soundEngine) window.soundEngine.playPop();
+      card.classList.remove('bounce-tap');
+      void card.offsetWidth;
+      card.classList.add('bounce-tap');
+      const emoji = card.dataset.emoji || '❤️';
+      for (let i = 0; i < 3; i++) {
+        const f = document.createElement('div');
+        f.className = 'nick-fly-emoji';
+        f.textContent = emoji;
+        f.style.setProperty('--nx', `${(Math.random() - 0.5) * 120}px`);
+        f.style.setProperty('--nr', `${(Math.random() - 0.5) * 60}deg`);
+        f.style.left = `${30 + Math.random() * 40}%`;
+        card.appendChild(f);
+        setTimeout(() => f.remove(), 1150);
+      }
+    });
+  });
 
   // 1. Slide Navigation Dots
   if (container && dots.length > 0) {
@@ -22,6 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (i === index) d.classList.add('active');
         else d.classList.remove('active');
       });
+
+      updateProgress();
 
       // Slide Heart celebration interval management - only run when user is on Slide Heart
       const slideHeart = document.getElementById('slide-heart');
@@ -253,16 +329,30 @@ document.addEventListener('DOMContentLoaded', () => {
     img.style.width = `${size}px`;
     img.style.height = `${size}px`;
     img.style.left = `${Math.random() * (window.innerWidth - 60)}px`;
+    img.style.setProperty('--wob', `${(Math.random() - 0.5) * 36}deg`);
 
-    const duration = 3.5 + Math.random() * 3.5;
+    const duration = 3.6 + Math.random() * 2.8;
     img.style.animationDuration = `${duration}s`;
 
     emojiLayer.appendChild(img);
     setTimeout(() => img.remove(), duration * 1000 + 200);
   }
 
+  function spawnLoveText(x, y) {
+    if (!emojiLayer) return;
+    const texts = ['بحبك ❤️', 'صافية لبن 🥛', 'نينو 👑', 'خلاص اتصالحنا 🥺❤️'];
+    const el = document.createElement('div');
+    el.className = 'forgive-love-text';
+    el.textContent = texts[Math.floor(Math.random() * texts.length)];
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    emojiLayer.appendChild(el);
+    setTimeout(() => el.remove(), 1350);
+  }
+
   if (forgiveBtn) {
     forgiveBtn.addEventListener('click', () => {
+      window.haptics([30, 50, 30]);
       // 1. Hide the decision card and evasive button completely
       if (decisionCard) {
         decisionCard.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
@@ -284,17 +374,40 @@ document.addEventListener('DOMContentLoaded', () => {
         const cx = window.innerWidth / 2;
         const cy = window.innerHeight / 2;
         spawnBurstEmoji(cx, cy, 45);
+        spawnLoveText(cx, cy - 40);
 
         // Continuous stream of Apple emojis flying up
         const streamInterval = setInterval(() => {
           spawnFloatingEmoji();
           spawnFloatingEmoji();
-        }, 220);
+        }, 260);
 
-        // Allow tapping anywhere to spawn more emojis
+        // Allow tapping anywhere to spawn more emojis + love text
         emojiLayer.addEventListener('pointerdown', (e) => {
+          window.haptics(12);
           spawnBurstEmoji(e.clientX, e.clientY, 12);
+          spawnLoveText(e.clientX, e.clientY);
         });
+
+        // 3. Show certificate payoff after explosion
+        setTimeout(() => {
+          const cert = document.getElementById('forgive-certificate');
+          if (cert) cert.classList.add('show');
+          if (window.confetti) {
+            window.confetti({ particleCount: 90, spread: 100, origin: { y: 0.5 }, shapes: ['heart'] });
+          }
+        }, 2200);
+
+        const certBtn = document.getElementById('forgive-cert-btn');
+        if (certBtn) {
+          certBtn.addEventListener('click', () => {
+            window.haptics([20, 40, 20]);
+            spawnBurstEmoji(window.innerWidth / 2, window.innerHeight / 2, 30);
+            if (window.confetti) {
+              window.confetti({ particleCount: 120, spread: 120, origin: { y: 0.6 } });
+            }
+          });
+        }
       }
 
       // Also trigger victory chime & canvas confetti

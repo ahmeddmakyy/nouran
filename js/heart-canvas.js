@@ -14,6 +14,7 @@ class HeartCanvas {
     this.connectedNodes = new Set();
     this.isUnlocked = false;
     this.celebrationInterval = null;
+    this.fillProgress = 0;
 
     this.hintEl = document.getElementById('heart-hint-text');
     this.nextBtn = document.getElementById('heart-next-slide-btn');
@@ -85,19 +86,19 @@ class HeartCanvas {
     const start = (e) => {
       e.preventDefault();
       this.isDrawing = true;
-      const pos = getPos(e);
+      const raw = getPos(e);
+      const pos = this.checkNodes(raw);
       this.currentStroke = [pos];
       this.strokes.push(this.currentStroke);
-      this.checkNodes(pos);
       this.spawnParticles(pos.x, pos.y, 3);
     };
 
     const move = (e) => {
       if (!this.isDrawing) return;
       e.preventDefault();
-      const pos = getPos(e);
+      const raw = getPos(e);
+      const pos = this.checkNodes(raw);
       this.currentStroke.push(pos);
-      this.checkNodes(pos);
       this.spawnParticles(pos.x, pos.y, 1);
     };
 
@@ -120,8 +121,25 @@ class HeartCanvas {
     }
   }
 
-  checkNodes(pos) {
-    const radius = 22;
+  magnetize(pos) {
+    // Snap to nearest unconnected node within 34px for satisfying feel
+    let best = null;
+    let bestDist = 34;
+    this.waypoints.forEach(node => {
+      if (node.connected) return;
+      const d = Math.hypot(node.x - pos.x, node.y - pos.y);
+      if (d < bestDist) {
+        bestDist = d;
+        best = node;
+      }
+    });
+    if (best) return { x: best.x, y: best.y };
+    return pos;
+  }
+
+  checkNodes(rawPos) {
+    const pos = this.magnetize(rawPos);
+    const radius = 24;
     let newlyConnected = false;
 
     this.waypoints.forEach(node => {
@@ -134,12 +152,14 @@ class HeartCanvas {
         if (window.soundEngine) {
           window.soundEngine.playPop();
         }
+        if (window.haptics) window.haptics(12);
       }
     });
 
     if (newlyConnected && !this.isUnlocked) {
       this.evaluateProgress();
     }
+    return pos;
   }
 
   evaluateProgress() {
@@ -357,6 +377,25 @@ class HeartCanvas {
     this.ctx.clearRect(0, 0, this.width, this.height);
     const time = Date.now() * 0.003;
 
+    // 0. Fill morph when unlocked
+    if (this.isUnlocked && this.fillProgress < 1) {
+      this.fillProgress = Math.min(1, this.fillProgress + 0.012);
+    }
+    if (this.fillProgress > 0) {
+      this.ctx.save();
+      this.ctx.beginPath();
+      this.guidePoints.forEach((p, idx) => {
+        if (idx === 0) this.ctx.moveTo(p.x, p.y);
+        else this.ctx.lineTo(p.x, p.y);
+      });
+      this.ctx.closePath();
+      this.ctx.fillStyle = `rgba(225, 29, 72, ${0.14 * this.fillProgress})`;
+      this.ctx.shadowColor = 'rgba(225,29,72,0.35)';
+      this.ctx.shadowBlur = 22 * this.fillProgress;
+      this.ctx.fill();
+      this.ctx.restore();
+    }
+
     // 1. Draw dashed guide heart outline connecting all waypoints
     this.ctx.save();
     this.ctx.beginPath();
@@ -365,18 +404,24 @@ class HeartCanvas {
       else this.ctx.lineTo(p.x, p.y);
     });
     this.ctx.closePath();
-    this.ctx.strokeStyle = this.isUnlocked ? 'rgba(225, 29, 72, 0.4)' : 'rgba(225, 29, 72, 0.22)';
+    this.ctx.strokeStyle = this.isUnlocked ? 'rgba(225, 29, 72, 0.55)' : 'rgba(225, 29, 72, 0.22)';
     this.ctx.lineWidth = this.isUnlocked ? 3 : 2;
     this.ctx.setLineDash(this.isUnlocked ? [] : [4, 6]);
+    if (this.isUnlocked) {
+      this.ctx.shadowColor = 'rgba(225,29,72,0.6)';
+      this.ctx.shadowBlur = 12;
+    }
     this.ctx.stroke();
     this.ctx.restore();
 
-    // 2. Draw user hand strokes
+    // 2. Draw user hand strokes with glow trail
     this.ctx.save();
-    this.ctx.lineWidth = 4.5;
+    this.ctx.lineWidth = 5;
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
     this.ctx.strokeStyle = '#E11D48';
+    this.ctx.shadowColor = 'rgba(225,29,72,0.65)';
+    this.ctx.shadowBlur = 10;
 
     this.strokes.forEach(stroke => {
       if (stroke.length < 2) return;

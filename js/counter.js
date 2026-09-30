@@ -8,9 +8,44 @@ class RelationshipCounter {
     this.minsEl = document.getElementById('counter-mins');
     this.secsEl = document.getElementById('counter-secs');
     this.summaryEl = document.getElementById('counter-summary');
+    this.counted = false;
+    this.displayDays = 0;
+    this.lastSecs = -1;
+
+    [this.daysEl, this.hoursEl, this.minsEl, this.secsEl].forEach(el => {
+      if (el) el.classList.add('counter-roll');
+    });
 
     this.update();
     setInterval(() => this.update(), 1000);
+  }
+
+  countUp() {
+    if (this.counted) return;
+    this.counted = true;
+    const now = new Date();
+    const target = Math.floor((now - this.startDate) / 86400000);
+    const start = performance.now();
+    const dur = 1600;
+    const step = (t) => {
+      const p = Math.min(1, (t - start) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      this.displayDays = Math.floor(target * eased);
+      if (this.daysEl && !this._holding) {
+        this.daysEl.textContent = this.displayDays.toLocaleString('ar-EG');
+      }
+      if (p < 1) requestAnimationFrame(step);
+      else this._holding = false;
+    };
+    this._holding = true;
+    requestAnimationFrame(step);
+  }
+
+  tick(el) {
+    if (!el) return;
+    el.classList.remove('tick');
+    void el.offsetWidth;
+    el.classList.add('tick');
   }
 
   update() {
@@ -26,10 +61,16 @@ class RelationshipCounter {
     const mins = totalMins % 60;
     const secs = totalSecs % 60;
 
-    if (this.daysEl) this.daysEl.textContent = totalDays.toLocaleString('ar-EG');
+    if (this.daysEl && !this._holding) this.daysEl.textContent = totalDays.toLocaleString('ar-EG');
     if (this.hoursEl) this.hoursEl.textContent = hours.toString().padStart(2, '0');
     if (this.minsEl) this.minsEl.textContent = mins.toString().padStart(2, '0');
-    if (this.secsEl) this.secsEl.textContent = secs.toString().padStart(2, '0');
+    if (this.secsEl) {
+      if (secs !== this.lastSecs) {
+        this.secsEl.textContent = secs.toString().padStart(2, '0');
+        this.tick(this.secsEl);
+        this.lastSecs = secs;
+      }
+    }
 
     // Approximate breakdown in years & months
     const startYear = this.startDate.getFullYear();

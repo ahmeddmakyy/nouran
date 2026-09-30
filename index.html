@@ -23,6 +23,10 @@
   <!-- Subtle Paper Grain -->
   <div class="paper-grain"></div>
 
+  <!-- Story progress + ambient hearts -->
+  <div class="story-progress"><div class="story-progress-fill" id="story-progress-fill"></div></div>
+  <div class="ambient-hearts" id="ambient-hearts"></div>
+
   <!-- Audio Element (Optimized for instant streaming) -->
   <audio id="bg-music" src="assets/audio/wala-ash-wala-kan.mp3" preload="auto" autoplay loop playsinline webkit-playsinline>
     <source src="assets/audio/wala-ash-wala-kan.mp3" type="audio/mpeg">
@@ -81,16 +85,18 @@
 
     <!-- SLIDE 1: Interactive Revenge Screen -->
     <section class="story-slide text-center relative" id="slide-revenge">
-      <div class="mb-2">
+      <div class="impact-flash" id="revenge-flash"></div>
+      <div class="combo-counter" id="revenge-combo">ضربة 1 🔥</div>
+      <div class="mb-2 reveal">
         <span class="pixel-badge">لو زعلانة مني 🥺💔</span>
       </div>
 
-      <h1 id="revenge-title" class="text-2xl sm:text-3xl font-bold font-display text-stone-900 mb-2 tracking-tight">
+      <h1 id="revenge-title" class="reveal text-2xl sm:text-3xl font-bold font-display text-stone-900 mb-2 tracking-tight">
         لو حابة تنتقمي.. دوسي عليا 🥺
       </h1>
 
       <!-- Character Visual Stage -->
-      <div id="revenge-stage" class="revenge-stage relative mx-auto my-1 cursor-pointer select-none max-w-xs flex items-center justify-center">
+      <div id="revenge-stage" class="reveal revenge-stage relative mx-auto my-1 cursor-pointer select-none max-w-xs flex items-center justify-center">
         <!-- Ahmed Standing (Default) -->
         <img id="ahmed-standing-img" src="assets/images/ahmed_standing.png" alt="أحمد" class="revenge-character-img max-h-[44vh] sm:max-h-[48vh] object-contain drop-shadow-md transition-all duration-200">
 
@@ -131,16 +137,16 @@
 
     <!-- SLIDE 2: Intro & Relationship Counter -->
     <section class="story-slide text-center" id="slide-hero">
-      <h1 class="text-3xl sm:text-4xl font-bold font-display text-stone-900 mb-3 tracking-tight">
+      <h1 class="reveal text-3xl sm:text-4xl font-bold font-display text-stone-900 mb-3 tracking-tight">
         كل ثانية معاكي بتسوى الدنيا
       </h1>
 
-      <p class="text-stone-600 text-sm max-w-xs sm:max-w-sm mx-auto mb-8 font-medium">
+      <p class="reveal text-stone-600 text-sm max-w-xs sm:max-w-sm mx-auto mb-8 font-medium">
         من يوم <span class="text-rose-600 font-bold">10 يوليو 2025</span> وحبي ليكي بيكبر كل يوم.. وميهونش عليا زعلك أبداً يا نينو.
       </p>
 
       <!-- Minimal Live Counter -->
-      <div class="clean-card mb-4">
+      <div class="reveal clean-card mb-4 counter-pulse-card" id="counter-card">
         <div class="grid grid-cols-4 gap-2 text-center">
           <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200/60">
             <span id="counter-days" class="block text-2xl sm:text-3xl font-bold font-num text-rose-600 mb-0.5">0</span>
@@ -161,7 +167,7 @@
         </div>
       </div>
 
-      <div id="counter-summary" class="text-xs text-stone-500 max-w-xs mx-auto">
+      <div id="counter-summary" class="reveal text-xs text-stone-500 max-w-xs mx-auto">
         447 يوم من الحب والضحك سوا
       </div>
 
@@ -173,15 +179,15 @@
 
     <!-- SLIDE 2: Interactive Heart Drawing -->
     <section class="story-slide text-center relative" id="slide-heart">
-      <h2 class="text-2xl sm:text-3xl font-bold font-display text-stone-900 mb-2">
+      <h2 class="reveal text-2xl sm:text-3xl font-bold font-display text-stone-900 mb-2">
         ارسمي ب صباعك يا مزة
       </h2>
 
-      <p id="heart-hint-text" class="text-stone-600 text-xs sm:text-sm mb-4 font-medium transition-all">
+      <p id="heart-hint-text" class="reveal text-stone-600 text-xs sm:text-sm mb-4 font-medium transition-all">
         وصلي النقط ببعض عشان تفتحي القلب ❤️
       </p>
 
-      <div class="canvas-container mb-4 relative">
+      <div class="reveal canvas-container mb-4 relative">
         <canvas id="heart-canvas"></canvas>
       </div>
 
@@ -200,20 +206,20 @@
 
     <!-- SLIDE 4: Polaroid Photo Memories -->
     <section class="story-slide text-center" id="slide-polaroids">
-      <div class="mb-3">
+      <div class="mb-3 reveal">
         <span class="pixel-badge">أيامنا الحلوة ☕</span>
       </div>
 
-      <h2 class="text-2xl sm:text-3xl font-bold font-display text-stone-900 mb-2">
+      <h2 class="reveal text-2xl sm:text-3xl font-bold font-display text-stone-900 mb-2">
         ذكرياتنا سوا
       </h2>
 
-      <p class="text-stone-600 text-xs sm:text-sm mb-5 font-medium">
+      <p class="reveal text-stone-600 text-xs sm:text-sm mb-5 font-medium">
         اسحبي الكارت يمين أو شمال عشان تشوفي اللي بعده
       </p>
 
       <!-- Polaroid Stack -->
-      <div class="polaroid-deck" id="polaroid-deck">
+      <div class="reveal polaroid-deck" id="polaroid-deck">
 
         <!-- Photo 1: Together -->
         <div class="polaroid-card">
@@ -309,14 +315,15 @@
 
     <!-- SLIDE 5: The 3 Nicknames -->
     <section class="story-slide text-center" id="slide-nicknames">
-      <div class="mb-4">
+      <div class="mb-4 reveal">
         <span class="pixel-badge">دلعك عندي ❤️</span>
       </div>
 
-      <div class="space-y-4 w-full max-w-sm text-right">
+      <div class="space-y-4 w-full max-w-sm text-right" id="nicknames-list">
 
         <!-- بسبوسة -->
-        <div class="nickname-item">
+        <div class="nickname-item" data-emoji="🍯">
+          <div class="nick-glow"></div>
           <div class="flex items-center mb-1">
             <span class="text-lg font-bold font-display text-amber-700">🍯 بسبوسة</span>
           </div>
@@ -326,7 +333,8 @@
         </div>
 
         <!-- كيكة -->
-        <div class="nickname-item">
+        <div class="nickname-item" data-emoji="🍰">
+          <div class="nick-glow"></div>
           <div class="flex items-center mb-1">
             <span class="text-lg font-bold font-display text-rose-700">🍰 كيكة</span>
           </div>
@@ -336,7 +344,8 @@
         </div>
 
         <!-- نينو -->
-        <div class="nickname-item">
+        <div class="nickname-item" data-emoji="👑">
+          <div class="nick-glow"></div>
           <div class="flex items-center mb-1">
             <span class="text-lg font-bold font-display text-purple-700">👑 نينو</span>
           </div>
@@ -355,20 +364,20 @@
 
     <!-- SLIDE 5: Special Sound Message -->
     <section class="story-slide text-center" id="slide-sound">
-      <div class="mb-3">
+      <div class="mb-3 reveal">
         <span class="pixel-badge">رسالة مخصوص 🎵</span>
       </div>
 
-      <h2 class="text-2xl sm:text-3xl font-bold font-display text-stone-900 mb-2">
+      <h2 class="reveal text-2xl sm:text-3xl font-bold font-display text-stone-900 mb-2">
         اسمعي دي يا نينو..
       </h2>
 
-      <p class="text-stone-600 text-xs sm:text-sm mb-6 font-medium">
+      <p class="reveal text-stone-600 text-xs sm:text-sm mb-6 font-medium">
         دوسي على الزرار دا واسمعي 🎧
       </p>
 
       <!-- Real Tactile Switch Panel -->
-      <div class="tactile-switch-panel w-full max-w-sm mx-auto p-6 rounded-3xl shadow-xl relative select-none">
+      <div class="reveal tactile-switch-panel w-full max-w-sm mx-auto p-6 rounded-3xl shadow-xl relative select-none">
         
         <!-- Screws in corners for retro audio chassis look -->
         <div class="chassis-screw top-2.5 left-2.5"></div>
@@ -404,6 +413,11 @@
           <span class="wave-bar"></span>
           <span class="wave-bar"></span>
           <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
         </div>
 
         <!-- Progress bar & timer -->
@@ -429,7 +443,7 @@
     <section class="story-slide text-center relative" id="slide-finale">
       
       <!-- Full-page Question Card -->
-      <div id="decision-card" class="clean-card w-full max-w-md py-10 px-6 sm:px-8 text-center my-auto shadow-xl">
+      <div id="decision-card" class="reveal clean-card w-full max-w-md py-10 px-6 sm:px-8 text-center my-auto shadow-xl">
         <h3 class="text-2xl sm:text-3xl font-bold font-display text-stone-900 mb-8 leading-snug">
           ها يا نينو.. صافية لبن؟ 🥺
         </h3>
@@ -447,6 +461,24 @@
 
       <!-- Fullscreen Apple Emojis Celebration Layer (Triggered on click, no text!) -->
       <div id="apple-emojis-layer" class="hidden fixed inset-0 pointer-events-auto z-40 overflow-hidden"></div>
+
+      <!-- Certificate payoff -->
+      <div id="forgive-certificate" class="forgive-certificate">
+        <div class="forgive-cert-card">
+          <div style="font-size:2rem">💍👑📜</div>
+          <div class="pixel-badge" style="margin:0 auto">وثيقة صلح رسمية معتمدة</div>
+          <h3>شهادة انتهاء الزعل<br>وعودة الدلع ❤️</h3>
+          <ul>
+            <li>• الطرف الأول: أحمد (المتهم الغلبان اللي ملوش غير رضاكي).</li>
+            <li>• الطرف الثاني: نوران (بسبوسة، كيكة، وأغلى نينو في الوجود).</li>
+            <li>• البند الأول: يسقط أي زعل أو عتاب فوراً، ونبدأ مرحلة دلع جديدة غير مسبوقة!</li>
+            <li>• البند الثاني: ولا عاش ولا كان اللي يزعل نينو تاني أبداً حتى لو كان أحمد نفسه!</li>
+          </ul>
+          <button id="forgive-cert-btn" class="w-full py-4 px-6 rounded-full bg-rose-600 text-white font-extrabold text-base shadow-lg transition-all active:scale-95" style="margin-top:1rem">
+            مبروك الصلح يا روحي بحبك أوي ❤️
+          </button>
+        </div>
+      </div>
 
     </section>
 

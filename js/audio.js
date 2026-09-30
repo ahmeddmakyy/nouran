@@ -626,10 +626,36 @@ class RevengePlayer {
 
   triggerHit() {
     this.hitCount++;
+    if (window.haptics) window.haptics(25);
 
     // 1. Comic impact punch sound
     if (window.soundEngine) {
       window.soundEngine.playStamp();
+    }
+
+    // 1b. Screen shake + flash + combo
+    const slide = document.getElementById('slide-revenge');
+    if (slide) {
+      slide.classList.remove('screen-shake');
+      void slide.offsetWidth;
+      slide.classList.add('screen-shake');
+    }
+    const flash = document.getElementById('revenge-flash');
+    if (flash) {
+      flash.classList.remove('go');
+      void flash.offsetWidth;
+      flash.classList.add('go');
+    }
+    const combo = document.getElementById('revenge-combo');
+    if (combo) {
+      const labels = ['ضربة 1 🔥', 'تاني تاني 🥺', 'كومبو 3 💔', 'خلاص يا نينو 😭', 'كومبو أسطوري ❤️‍🔥'];
+      combo.textContent = this.hitCount <= labels.length ? labels[this.hitCount - 1] : `ضربة ${this.hitCount} ❤️‍🔥`;
+      combo.classList.add('show');
+      combo.classList.remove('pop');
+      void combo.offsetWidth;
+      combo.classList.add('pop');
+      clearTimeout(this._comboT);
+      this._comboT = setTimeout(() => combo.classList.remove('show'), 2200);
     }
 
     // 2. Shake animation
@@ -673,17 +699,32 @@ class RevengePlayer {
       this.nextBtn.classList.remove('hidden');
     }
 
-    // 4. Particle tear burst
+    // 4. Particle tear burst + continuous stream
     this.spawnTears();
+    this.startTearStream();
 
     // 5. Play revenge audio
     this.playAudio();
   }
 
+  startTearStream() {
+    if (this._tearStream || !this.stage) return;
+    this._tearStream = setInterval(() => {
+      if (!this.cryingImg || this.cryingImg.classList.contains('hidden')) return;
+      for (let i = 0; i < 2; i++) {
+        const t = document.createElement('div');
+        t.className = 'crying-tear-stream';
+        t.style.left = `${38 + Math.random() * 24}%`;
+        this.stage.appendChild(t);
+        setTimeout(() => t.remove(), 1150);
+      }
+    }, 450);
+  }
+
   spawnTears() {
     if (!this.tearsLayer) return;
     const icons = ['💧', '😭', '💔', '💦', '🥺'];
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 16; i++) {
       const drop = document.createElement('div');
       drop.className = 'tear-drop-particle';
       drop.textContent = icons[Math.floor(Math.random() * icons.length)];
@@ -691,9 +732,9 @@ class RevengePlayer {
       drop.style.top = `${25 + Math.random() * 30}%`;
 
       const angle = Math.random() * Math.PI * 2;
-      const dist = 60 + Math.random() * 100;
+      const dist = 70 + Math.random() * 110;
       const dx = Math.cos(angle) * dist;
-      const dy = Math.sin(angle) * dist + 50;
+      const dy = Math.sin(angle) * dist + 55;
 
       drop.style.setProperty('--dx', `${dx}px`);
       drop.style.setProperty('--dy', `${dy}px`);

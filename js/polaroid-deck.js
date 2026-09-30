@@ -26,7 +26,13 @@ class PolaroidDeck {
 
   initStack() {
     this.cards.forEach((card, index) => {
-      card.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease';
+      if (!card.querySelector('.polaroid-stamp')) {
+        const s = document.createElement('div');
+        s.className = 'polaroid-stamp';
+        s.textContent = 'قمر ❤️';
+        card.appendChild(s);
+      }
+      card.style.transition = 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, box-shadow 0.25s ease';
       const offset = (index - this.currentIndex + this.cards.length) % this.cards.length;
 
       card.dataset.offset = offset;
@@ -38,6 +44,7 @@ class PolaroidDeck {
       card.style.transform = `translate3d(0, ${translateY}px, 0) scale(${scale}) rotate(${rot}deg)`;
       card.style.opacity = offset > 3 ? '0' : '1';
       card.style.pointerEvents = offset === 0 ? 'auto' : 'none';
+      card.classList.remove('lifted');
     });
 
     this.topCard = this.cards[this.currentIndex];
@@ -73,7 +80,9 @@ class PolaroidDeck {
       this.currentY = clientY - this.startY;
 
       const rot = this.rotations[this.currentIndex % this.rotations.length] + this.currentX * 0.06;
-      this.topCard.style.transform = `translate3d(${this.currentX}px, ${this.currentY}px, 0) rotate(${rot}deg)`;
+      const rotY = Math.max(-18, Math.min(18, this.currentX * 0.08));
+      this.topCard.style.transform = `translate3d(${this.currentX}px, ${this.currentY}px, 0) rotate(${rot}deg) rotateY(${rotY}deg) scale(1.03)`;
+      this.topCard.classList.add('lifted');
 
       // Animate next card scaling up slightly
       const nextCard = this.cards[(this.currentIndex + 1) % this.cards.length];
@@ -144,18 +153,36 @@ class PolaroidDeck {
   swipeCard(dir = 1) {
     if (!this.topCard) return;
     if (window.soundEngine) window.soundEngine.playPop();
+    if (window.haptics) window.haptics(18);
+
+    // stamp pop for right swipe
+    if (dir > 0) {
+      const stamp = this.topCard.querySelector('.polaroid-stamp');
+      if (stamp) {
+        stamp.textContent = 'قمر ❤️';
+        stamp.classList.add('show');
+      }
+    } else {
+      const stamp = this.topCard.querySelector('.polaroid-stamp');
+      if (stamp) {
+        stamp.textContent = 'عسل 🍯';
+        stamp.classList.add('show');
+      }
+    }
 
     const targetX = dir * (window.innerWidth > 600 ? 550 : 380);
     const targetRot = dir * 28;
 
-    this.topCard.style.transition = 'transform 0.4s ease-in, opacity 0.35s ease-in';
-    this.topCard.style.transform = `translate3d(${targetX}px, ${this.currentY + 30}px, 0) rotate(${targetRot}deg)`;
-    this.topCard.style.opacity = '0';
+    setTimeout(() => {
+      this.topCard.style.transition = 'transform 0.42s ease-in, opacity 0.35s ease-in';
+      this.topCard.style.transform = `translate3d(${targetX}px, ${this.currentY + 30}px, 0) rotate(${targetRot}deg) rotateY(${dir * 22}deg)`;
+      this.topCard.style.opacity = '0';
+    }, 140);
 
     setTimeout(() => {
       this.currentIndex = (this.currentIndex + 1) % this.cards.length;
       this.initStack();
-    }, 320);
+    }, 460);
   }
 
   prevCard() {
