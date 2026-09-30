@@ -250,24 +250,45 @@ class MusicPlayer {
 
   play() {
     if (!this.audio) return;
-    this.audio.volume = 1.0;
-    const pr = this.audio.play();
-    if (pr && pr.catch) {
-      pr.then(() => {
-        this.isPlaying = true;
-        this.updateUI();
-      }).catch(err => {
-        console.log("Audio autoplay prevented by browser policy:", err);
-      });
-    } else if (pr && pr.then) {
-      pr.then(() => {
-        this.isPlaying = true;
-        this.updateUI();
-      }).catch(() => {});
-    } else {
+    // If we started muted-autoplay earlier, just unmute — the timeline
+    // is already running from page open.
+    if (this.audio.muted && this.mutedAutoplay) {
+      this.audio.muted = false;
+      this.mutedAutoplay = false;
       this.isPlaying = true;
       this.updateUI();
+      return;
     }
+    this.audio.volume = 1.0;
+    const pr = this.audio.play();
+    const onOk = () => {
+      this.isPlaying = true;
+      this.updateUI();
+    };
+    if (pr && pr.then) {
+      pr.then(onOk).catch(() => {
+        // Audible autoplay blocked → start MUTED so the timeline runs
+        // from page open; first tap anywhere unmutes (see tryPlayAudio).
+        this.playMuted();
+      });
+    } else {
+      onOk();
+    }
+  }
+
+  playMuted() {
+    if (!this.audio) return;
+    try {
+      this.audio.muted = true;
+      const pr = this.audio.play();
+      const onOk = () => {
+        this.mutedAutoplay = true;
+        this.isPlaying = true;
+        this.updateUI();
+      };
+      if (pr && pr.then) pr.then(onOk).catch(() => {});
+      else onOk();
+    } catch (e) {}
   }
 
   pause() {
@@ -278,6 +299,11 @@ class MusicPlayer {
   }
 
   toggle() {
+    // First tap while muted-autoplay is running = unmute, not pause
+    if (this.audio && this.audio.muted && this.mutedAutoplay) {
+      this.play();
+      return;
+    }
     if (this.isPlaying) {
       this.pause();
     } else {

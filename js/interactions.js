@@ -253,10 +253,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!isEscaped) {
       isEscaped = true;
+      // Root fix: the decision card has a CSS transform (reveal animation),
+      // which makes position:fixed children position relative to the CARD
+      // instead of the viewport — that's what threw the button off-screen.
+      // Moving it to <body> makes fixed coords = viewport coords.
+      const b = evasiveBtn.getBoundingClientRect();
+      document.body.appendChild(evasiveBtn);
       evasiveBtn.classList.remove('w-full');
       evasiveBtn.classList.add('escaped');
       // Anchor at its current visual spot so it doesn't jump on first escape
-      const b = evasiveBtn.getBoundingClientRect();
       evasiveBtn.style.left = `${b.left}px`;
       evasiveBtn.style.top = `${b.top}px`;
       // Force reflow so the fixed positioning applies before animating
@@ -516,14 +521,27 @@ document.addEventListener('DOMContentLoaded', () => {
   let audioUnlocked = false;
   const tryPlayAudio = () => {
     if (audioUnlocked) return;
+    // Route through the player: it unmutes a muted-autoplay session,
+    // otherwise starts audible playback. Either way the song keeps the
+    // timeline that started at page open.
+    if (window.musicPlayer) {
+      const mp = window.musicPlayer;
+      if (mp.audio && mp.audio.muted && mp.mutedAutoplay) {
+        mp.play(); // unmutes, keeps position
+        audioUnlocked = true;
+        return;
+      }
+    }
     if (audio && audio.paused) {
       audio.volume = 1.0;
+      audio.muted = false;
       const pr = audio.play();
       if (pr && pr.then) {
         pr.then(() => {
           audioUnlocked = true;
           if (window.musicPlayer) {
             window.musicPlayer.isPlaying = true;
+            window.musicPlayer.mutedAutoplay = false;
             window.musicPlayer.updateUI();
           }
         }).catch(() => {
@@ -533,6 +551,9 @@ document.addEventListener('DOMContentLoaded', () => {
         audioUnlocked = true;
       }
     } else if (audio && !audio.paused) {
+      if (audio.muted && window.musicPlayer) {
+        window.musicPlayer.play(); // unmute path
+      }
       audioUnlocked = true;
     }
   };
