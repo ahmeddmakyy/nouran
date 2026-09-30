@@ -101,7 +101,7 @@
         <img id="ahmed-standing-img" src="assets/images/ahmed_standing.png" alt="أحمد" class="revenge-character-img max-h-[44vh] sm:max-h-[48vh] object-contain drop-shadow-md transition-all duration-200">
 
         <!-- Ahmed Crying (Revealed after hit) -->
-        <img id="ahmed-crying-img" src="assets/images/ahmed_crying.png" alt="أحمد بيعيط" class="revenge-character-img hidden max-h-[44vh] sm:max-h-[48vh] object-contain drop-shadow-xl transition-all duration-200">
+        <img id="ahmed-crying-img" src="assets/images/ahmed_crying.png" alt="أحمد بيعيط" loading="lazy" decoding="async" class="revenge-character-img hidden max-h-[44vh] sm:max-h-[48vh] object-contain drop-shadow-xl transition-all duration-200">
 
         <!-- Floating Comic Speech Bubble -->
         <div id="revenge-speech-bubble" class="speech-bubble hidden absolute top-2 right-1/2 translate-x-1/2 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-xl border border-rose-300 text-xs sm:text-sm font-extrabold text-rose-700 whitespace-nowrap z-20">
@@ -225,7 +225,7 @@
         <div class="polaroid-card">
           <div class="polaroid-tape"></div>
           <div class="polaroid-img">
-            <img src="assets/images/photo1_together.jpg" alt="أحمد ونوران في باسيلكو">
+            <img src="assets/images/photo1_together.jpg" alt="أحمد ونوران في باسيلكو" fetchpriority="high" decoding="async">
           </div>
           <div class="pt-2 text-right">
             <p class="text-stone-800 text-xs font-semibold font-display">
@@ -238,7 +238,7 @@
         <div class="polaroid-card">
           <div class="polaroid-tape"></div>
           <div class="polaroid-img">
-            <img src="assets/images/photo2_pizza.jpg" alt="نوران مع البيتزا">
+            <img src="assets/images/photo2_pizza.jpg" alt="نوران مع البيتزا" loading="lazy" decoding="async">
           </div>
           <div class="pt-2 text-right">
             <p class="text-stone-800 text-xs font-semibold font-display">
@@ -251,7 +251,7 @@
         <div class="polaroid-card">
           <div class="polaroid-tape"></div>
           <div class="polaroid-img">
-            <img src="assets/images/photo3_close.jpg" alt="مسكة إيد">
+            <img src="assets/images/photo3_close.jpg" alt="مسكة إيد" loading="lazy" decoding="async">
           </div>
           <div class="pt-2 text-right">
             <p class="text-stone-800 text-xs font-semibold font-display">
@@ -264,7 +264,7 @@
         <div class="polaroid-card">
           <div class="polaroid-tape"></div>
           <div class="polaroid-img">
-            <img src="assets/images/photo4_smile.jpg" alt="ابتسامة">
+            <img src="assets/images/photo4_smile.jpg" alt="ابتسامة" loading="lazy" decoding="async">
           </div>
           <div class="pt-2 text-right">
             <p class="text-stone-800 text-xs font-semibold font-display">
@@ -277,7 +277,7 @@
         <div class="polaroid-card">
           <div class="polaroid-tape"></div>
           <div class="polaroid-img">
-            <img src="assets/images/photo5_cat.jpg" alt="قطة بتأكل قطة">
+            <img src="assets/images/photo5_cat.jpg" alt="قطة بتأكل قطة" loading="lazy" decoding="async">
           </div>
           <div class="pt-2 text-right">
             <p class="text-stone-800 text-xs font-semibold font-display">
@@ -290,7 +290,7 @@
         <div class="polaroid-card">
           <div class="polaroid-tape"></div>
           <div class="polaroid-img">
-            <img src="assets/images/photo6_stanley_pizza.jpg" alt="ذكرياتنا كلها بيتزا بس ولا ايه؟">
+            <img src="assets/images/photo6_stanley_pizza.jpg" alt="ذكرياتنا كلها بيتزا بس ولا ايه؟" loading="lazy" decoding="async">
           </div>
           <div class="pt-2 text-right">
             <p class="text-stone-800 text-xs font-semibold font-display">
@@ -462,21 +462,33 @@
       <!-- Fullscreen Apple Emojis Celebration Layer (Triggered on click, no text!) -->
       <div id="apple-emojis-layer" class="hidden fixed inset-0 pointer-events-auto z-40 overflow-hidden"></div>
 
-      <!-- Certificate payoff -->
+      <!-- Certificate payoff: official document, tap anywhere for hearts -->
       <div id="forgive-certificate" class="forgive-certificate">
-        <div class="forgive-cert-card">
-          <div style="font-size:2rem">💍👑📜</div>
-          <div class="pixel-badge" style="margin:0 auto">وثيقة صلح رسمية معتمدة</div>
-          <h3>شهادة انتهاء الزعل<br>وعودة الدلع ❤️</h3>
-          <ul>
-            <li>• الطرف الأول: أحمد (المتهم الغلبان اللي ملوش غير رضاكي).</li>
-            <li>• الطرف الثاني: نوران (بسبوسة، كيكة، وأغلى نينو في الوجود).</li>
-            <li>• البند الأول: يسقط أي زعل أو عتاب فوراً، ونبدأ مرحلة دلع جديدة غير مسبوقة!</li>
-            <li>• البند الثاني: ولا عاش ولا كان اللي يزعل نينو تاني أبداً حتى لو كان أحمد نفسه!</li>
-          </ul>
-          <button id="forgive-cert-btn" class="w-full py-4 px-6 rounded-full bg-rose-600 text-white font-extrabold text-base shadow-lg transition-all active:scale-95" style="margin-top:1rem">
-            مبروك الصلح يا روحي بحبك أوي ❤️
-          </button>
+        <div class="forgive-cert-paper" id="forgive-cert-paper">
+          <div class="cert-watermark">❤️</div>
+          <div class="cert-republic">جمهورية الحب المتحدة &nbsp;•&nbsp; وزارة الدلع والمصالحة</div>
+          <div class="cert-emblem">💍</div>
+          <div class="cert-doc-no">
+            <span>وثيقة رقم: <span class="font-num">2026 / 001</span></span>
+            <span id="cert-date">القاهرة</span>
+          </div>
+          <h3 class="cert-title">شهادة انتهاء الزعل<br>وعودة الدلع <span class="cert-seal-inline">معتمدة ♥</span></h3>
+          <p class="cert-article"><b>الطرف الأول:</b> أحمد — المتهم الغلبان اللي ملوش غير رضاكي.</p>
+          <p class="cert-article"><b>الطرف الثاني:</b> نوران — بسبوسة، كيكة، وأغلى نينو في الوجود.</p>
+          <p class="cert-article"><b>المادة الأولى:</b> يسقط أي زعل أو عتاب فوراً، وتبدأ مرحلة دلع جديدة غير مسبوقة.</p>
+          <p class="cert-article"><b>المادة الثانية:</b> ولا عاش ولا كان اللي يزعل نينو تاني أبداً — حتى لو كان أحمد نفسه.</p>
+          <div class="cert-sign-row">
+            <div class="cert-sign">
+              <div class="sign-name">أحمد</div>
+              توقيع الطرف الأول
+            </div>
+            <div class="cert-stamp"><span class="big">♥</span>ختم الصلح<br>الرسمي</div>
+            <div class="cert-sign">
+              <div class="sign-name">نينو</div>
+              توقيع الطرف الثاني
+            </div>
+          </div>
+          <div class="cert-hint">دوسي على الوثيقة عشان تطيري قلوب ❤️</div>
         </div>
       </div>
 

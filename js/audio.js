@@ -711,20 +711,20 @@ class RevengePlayer {
     if (this._tearStream || !this.stage) return;
     this._tearStream = setInterval(() => {
       if (!this.cryingImg || this.cryingImg.classList.contains('hidden')) return;
-      for (let i = 0; i < 2; i++) {
-        const t = document.createElement('div');
-        t.className = 'crying-tear-stream';
-        t.style.left = `${38 + Math.random() * 24}%`;
-        this.stage.appendChild(t);
-        setTimeout(() => t.remove(), 1150);
-      }
-    }, 450);
+      if (this.stage.querySelectorAll('.crying-tear-stream').length > 8) return; // perf cap
+      const t = document.createElement('div');
+      t.className = 'crying-tear-stream';
+      t.style.left = `${38 + Math.random() * 24}%`;
+      this.stage.appendChild(t);
+      setTimeout(() => t.remove(), 1150);
+    }, 700);
   }
 
   spawnTears() {
     if (!this.tearsLayer) return;
+    if (this.tearsLayer.childElementCount > 30) return; // perf cap
     const icons = ['💧', '😭', '💔', '💦', '🥺'];
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 12; i++) {
       const drop = document.createElement('div');
       drop.className = 'tear-drop-particle';
       drop.textContent = icons[Math.floor(Math.random() * icons.length)];

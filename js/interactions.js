@@ -40,17 +40,17 @@ document.addEventListener('DOMContentLoaded', () => {
     progressFill.style.width = `${p}%`;
   }
 
-  // Ambient hearts (lightweight, pooled)
+  // Ambient hearts (perf: only 6, slow, transform+opacity only)
   if (ambientBox) {
     const icons = ['❤️', '💖', '✨', '🌸', '💕'];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 6; i++) {
       const h = document.createElement('div');
       h.className = 'ambient-heart';
       h.textContent = icons[i % icons.length];
       h.style.left = `${Math.random() * 92}%`;
-      h.style.fontSize = `${12 + Math.random() * 18}px`;
-      h.style.animationDuration = `${9 + Math.random() * 9}s`;
-      h.style.animationDelay = `${Math.random() * 9}s`;
+      h.style.fontSize = `${11 + Math.random() * 14}px`;
+      h.style.animationDuration = `${13 + Math.random() * 9}s`;
+      h.style.animationDelay = `${Math.random() * 13}s`;
       ambientBox.appendChild(h);
     }
   }
@@ -88,7 +88,18 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
+    // perf: rAF-throttle the scroll handler (was running layout reads every scroll tick)
+    let scrollQueued = false;
     container.addEventListener('scroll', () => {
+      if (scrollQueued) return;
+      scrollQueued = true;
+      requestAnimationFrame(() => {
+        scrollQueued = false;
+      handleScroll();
+      });
+    }, { passive: true });
+
+    function handleScroll() {
       const scrollPos = container.scrollTop;
       const index = Math.round(scrollPos / window.innerHeight);
 
@@ -128,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
           window.revengePlayer.pause(true);
         }
       }
-    });
+    }
   }
 
   // 2. Next slide button in canvas & tap-to-spawn phrase in Slide 2
@@ -146,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const phrases = ["بحبك ❤️", "خلاص بقى اتصالحي 🥺", "بموت فيكي 🥰", "وحشتيني أوي أوي أوي 🫂", "وحشتيني 💖"];
         const p = phrases[Math.floor(Math.random() * phrases.length)];
         const layer = document.getElementById('heart-celebration-layer');
-        if (layer) {
+        if (layer && layer.childElementCount < 26) {
           const rect = layer.getBoundingClientRect();
           const phraseEl = document.createElement('div');
           phraseEl.className = 'celebration-phrase-item';
@@ -162,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 3. Evasive "لسه زعلانة" Button - Fullscreen roaming & mouse proximity fleeing
+  // 3. Evasive "لسه زعلانة" Button — smart roaming, always visible & inside viewport
   const evasiveBtn = document.getElementById('evasive-btn');
   const remarks = [
     "طب عشان خاطري أنا؟ 🥺",
@@ -176,86 +187,120 @@ document.addEventListener('DOMContentLoaded', () => {
   let remarkIdx = 0;
   let isEscaped = false;
   let lastDodgeTime = 0;
+  const DODGE_COOLDOWN = 320;
+
+  function isFinaleVisible() {
+    const finale = document.getElementById('slide-finale');
+    if (!finale) return false;
+    const r = finale.getBoundingClientRect();
+    return r.bottom > window.innerHeight * 0.3 && r.top < window.innerHeight * 0.7;
+  }
+
+  // Safety net: clamp the button back inside the viewport no matter what
+  function clampIntoViewport() {
+    if (!evasiveBtn || !isEscaped) return;
+    const b = evasiveBtn.getBoundingClientRect();
+    const marginX = 16;
+    const marginTop = 75; // avoid floating audio dock
+    const marginBottom = 96; // avoid swipe hint
+    let fixX = 0, fixY = 0;
+    if (b.left < marginX) fixX = marginX - b.left;
+    else if (b.right > window.innerWidth - marginX) fixX = (window.innerWidth - marginX) - b.right;
+    if (b.top < marginTop) fixY = marginTop - b.top;
+    else if (b.bottom > window.innerHeight - marginBottom) fixY = (window.innerHeight - marginBottom) - b.bottom;
+    if (fixX !== 0 || fixY !== 0) {
+      const curL = parseFloat(evasiveBtn.style.left || '0');
+      const curT = parseFloat(evasiveBtn.style.top || '0');
+      if (!isNaN(curL)) evasiveBtn.style.left = `${curL + fixX}px`;
+      if (!isNaN(curT)) evasiveBtn.style.top = `${curT + fixY}px`;
+    }
+  }
 
   function dodge(cursorX = null, cursorY = null) {
     if (!evasiveBtn || evasiveBtn.style.display === 'none') return;
+    if (!isFinaleVisible()) return;
+
+    const now = Date.now();
+    if (now - lastDodgeTime < DODGE_COOLDOWN) return;
+    lastDodgeTime = now;
 
     if (window.soundEngine) {
       window.soundEngine.playPop();
     }
+    if (window.haptics) window.haptics(12);
 
-    const btnWidth = evasiveBtn.offsetWidth || 180;
-    const btnHeight = evasiveBtn.offsetHeight || 44;
-
-    // Viewport bounds with safe margins
-    const marginX = 24;
-    const marginTop = 75; // Avoid floating audio dock
-    const marginBottom = 40;
-
-    const maxX = Math.max(marginX, window.innerWidth - btnWidth - marginX);
-    const maxY = Math.max(marginTop, window.innerHeight - btnHeight - marginBottom);
-
-    let newX, newY;
-    let attempts = 0;
-
-    // Pick a position across the whole screen far from cursor
-    do {
-      newX = marginX + Math.random() * (maxX - marginX);
-      newY = marginTop + Math.random() * (maxY - marginTop);
-      attempts++;
-      if (cursorX === null || cursorY === null) break;
-      const dist = Math.hypot(newX + btnWidth / 2 - cursorX, newY + btnHeight / 2 - cursorY);
-      if (dist > 180) break;
-    } while (attempts < 20);
+    // 1. Change the phrase FIRST, then measure the real size
+    remarkIdx = (remarkIdx + 1) % remarks.length;
+    const txt = evasiveBtn.querySelector('.btn-text');
+    if (txt) txt.textContent = remarks[remarkIdx];
 
     if (!isEscaped) {
       isEscaped = true;
       evasiveBtn.classList.remove('w-full');
-      evasiveBtn.style.position = 'fixed';
-      evasiveBtn.style.zIndex = '35';
-      evasiveBtn.style.width = 'max-content';
-      evasiveBtn.style.maxWidth = '280px';
-      evasiveBtn.style.boxShadow = '0 12px 28px -4px rgba(0, 0, 0, 0.22)';
+      evasiveBtn.classList.add('escaped');
+      // Anchor at its current visual spot so it doesn't jump on first escape
+      const b = evasiveBtn.getBoundingClientRect();
+      evasiveBtn.style.left = `${b.left}px`;
+      evasiveBtn.style.top = `${b.top}px`;
+      // Force reflow so the fixed positioning applies before animating
+      void evasiveBtn.offsetWidth;
     }
 
-    evasiveBtn.style.transition = 'left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.28s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    // Measure AFTER text change + fixed positioning
+    const btnWidth = evasiveBtn.offsetWidth || 180;
+    const btnHeight = evasiveBtn.offsetHeight || 48;
+
+    // Safe play zone: inside viewport, clear of dock + swipe hint
+    const marginX = 16;
+    const marginTop = 75;
+    const marginBottom = 96;
+    const minX = marginX;
+    const maxX = Math.max(minX, window.innerWidth - btnWidth - marginX);
+    const minY = marginTop;
+    const maxY = Math.max(minY, window.innerHeight - btnHeight - marginBottom);
+
+    let newX = minX, newY = minY;
+    let attempts = 0;
+    // Prefer a spot far from the cursor, but ALWAYS land inside bounds
+    do {
+      newX = minX + Math.random() * (maxX - minX);
+      newY = minY + Math.random() * (maxY - minY);
+      attempts++;
+      if (cursorX === null || cursorY === null) break;
+      const dist = Math.hypot(newX + btnWidth / 2 - cursorX, newY + btnHeight / 2 - cursorY);
+      if (dist > 170 || attempts >= 25) break;
+    } while (attempts < 25);
+
+    // Hard clamp (belt & suspenders — never off-screen)
+    newX = Math.min(Math.max(newX, minX), maxX);
+    newY = Math.min(Math.max(newY, minY), maxY);
+
     evasiveBtn.style.left = `${newX}px`;
     evasiveBtn.style.top = `${newY}px`;
-    evasiveBtn.style.transform = `rotate(${(Math.random() - 0.5) * 16}deg)`;
+    evasiveBtn.style.transform = `rotate(${(Math.random() - 0.5) * 14}deg)`;
 
-    remarkIdx = (remarkIdx + 1) % remarks.length;
-    const txt = evasiveBtn.querySelector('.btn-text');
-    if (txt) txt.textContent = remarks[remarkIdx];
+    // Verify after the transition lands
+    clearTimeout(dodge._clampT);
+    dodge._clampT = setTimeout(clampIntoViewport, 380);
   }
 
-  // Laptop/Desktop mouse proximity detection: mouse can NEVER touch the button
+  // Laptop/Desktop mouse proximity: the mouse can NEVER touch the button
   window.addEventListener('mousemove', (e) => {
     if (!evasiveBtn || evasiveBtn.style.display === 'none') return;
-
-    // Check if Slide 5 is visible
-    const slide5 = document.getElementById('slide-finale');
-    if (!slide5) return;
-    const sRect = slide5.getBoundingClientRect();
-    if (sRect.bottom < window.innerHeight * 0.3 || sRect.top > window.innerHeight * 0.7) {
-      return;
-    }
-
+    if (!isFinaleVisible()) return;
     const bRect = evasiveBtn.getBoundingClientRect();
-    const btnCenterX = bRect.left + bRect.width / 2;
-    const btnCenterY = bRect.top + bRect.height / 2;
-    const dist = Math.hypot(e.clientX - btnCenterX, e.clientY - btnCenterY);
-
-    const now = Date.now();
-    // Dodge when mouse gets within 110px!
-    if (dist < 110 && (now - lastDodgeTime > 120)) {
-      lastDodgeTime = now;
-      dodge(e.clientX, e.clientY);
-    }
+    // Ignore if the button is currently off-screen (e.g. mid-scroll)
+    if (bRect.width === 0) return;
+    const dist = Math.hypot(e.clientX - (bRect.left + bRect.width / 2), e.clientY - (bRect.top + bRect.height / 2));
+    if (dist < 110) dodge(e.clientX, e.clientY);
   });
+
+  // Keep it inside on rotate/resize while escaped
+  window.addEventListener('resize', clampIntoViewport);
+  window.addEventListener('orientationchange', () => setTimeout(clampIntoViewport, 300));
 
   if (evasiveBtn) {
     evasiveBtn.addEventListener('mouseenter', (e) => dodge(e.clientX, e.clientY));
-    evasiveBtn.addEventListener('mouseover', (e) => dodge(e.clientX, e.clientY));
     evasiveBtn.addEventListener('touchstart', (e) => {
       e.preventDefault();
       const touch = e.touches[0];
@@ -265,7 +310,6 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       dodge(e.clientX, e.clientY);
     });
-    evasiveBtn.addEventListener('focus', () => dodge());
   }
 
   // 4. Apple Emojis Flying Everywhere Finale
@@ -293,6 +337,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function spawnBurstEmoji(x, y, count = 30) {
     if (!emojiLayer) return;
+    // perf cap: never more than ~70 live emojis
+    count = Math.min(count, Math.max(0, 70 - emojiLayer.childElementCount));
     for (let i = 0; i < count; i++) {
       const img = document.createElement('img');
       img.src = appleEmojis[Math.floor(Math.random() * appleEmojis.length)];
@@ -321,6 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function spawnFloatingEmoji() {
     if (!emojiLayer || emojiLayer.classList.contains('hidden')) return;
+    if (emojiLayer.childElementCount > 60) return; // perf cap
     const img = document.createElement('img');
     img.src = appleEmojis[Math.floor(Math.random() * appleEmojis.length)];
     img.className = 'apple-emoji-item apple-emoji-float';
@@ -376,16 +423,15 @@ document.addEventListener('DOMContentLoaded', () => {
         spawnBurstEmoji(cx, cy, 45);
         spawnLoveText(cx, cy - 40);
 
-        // Continuous stream of Apple emojis flying up
+        // Continuous stream of Apple emojis flying up (perf: slower + single spawn)
         const streamInterval = setInterval(() => {
           spawnFloatingEmoji();
-          spawnFloatingEmoji();
-        }, 260);
+        }, 450);
 
         // Allow tapping anywhere to spawn more emojis + love text
         emojiLayer.addEventListener('pointerdown', (e) => {
           window.haptics(12);
-          spawnBurstEmoji(e.clientX, e.clientY, 12);
+          spawnBurstEmoji(e.clientX, e.clientY, 10);
           spawnLoveText(e.clientX, e.clientY);
         });
 
@@ -393,19 +439,24 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
           const cert = document.getElementById('forgive-certificate');
           if (cert) cert.classList.add('show');
+          const dateEl = document.getElementById('cert-date');
+          if (dateEl) {
+            try {
+              dateEl.textContent = 'القاهرة في ' + new Date().toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' });
+            } catch (e) {}
+          }
           if (window.confetti) {
-            window.confetti({ particleCount: 90, spread: 100, origin: { y: 0.5 }, shapes: ['heart'] });
+            window.confetti({ particleCount: 60, spread: 90, origin: { y: 0.5 } });
           }
         }, 2200);
 
-        const certBtn = document.getElementById('forgive-cert-btn');
-        if (certBtn) {
-          certBtn.addEventListener('click', () => {
-            window.haptics([20, 40, 20]);
-            spawnBurstEmoji(window.innerWidth / 2, window.innerHeight / 2, 30);
-            if (window.confetti) {
-              window.confetti({ particleCount: 120, spread: 120, origin: { y: 0.6 } });
-            }
+        // Tap the document itself to fly hearts (no buttons on a real document)
+        const certPaper = document.getElementById('forgive-cert-paper');
+        if (certPaper) {
+          certPaper.addEventListener('pointerdown', (e) => {
+            window.haptics([15, 40, 15]);
+            spawnBurstEmoji(e.clientX, e.clientY, 14);
+            spawnLoveText(e.clientX, e.clientY);
           });
         }
       }

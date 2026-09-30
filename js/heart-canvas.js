@@ -28,7 +28,7 @@ class HeartCanvas {
 
   initCanvas() {
     const rect = this.canvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5); // perf: cap DPR (retina 3x was 9x pixels)
     this.width = rect.width || 340;
     this.height = rect.height || 340;
 
@@ -243,21 +243,21 @@ class HeartCanvas {
 
     const heartColors = ['#E11D48', '#F43F5E', '#FB7185', '#FDA4AF', '#BE123C'];
 
-    // 1. Burst repeated hearts radially from center of the screen
+    // 1. Burst repeated hearts radially from center of the screen (perf: 14 not 22)
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight * 0.45;
 
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < 14; i++) {
       const heart = document.createElement('div');
       heart.className = 'celebration-heart-clone celebration-heart-burst';
-      const size = 26 + Math.random() * 48;
+      const size = 26 + Math.random() * 44;
       const color = heartColors[Math.floor(Math.random() * heartColors.length)];
 
       heart.innerHTML = `<svg viewBox="0 0 32 32" style="width:${size}px; height:${size}px; fill:${color}; filter:drop-shadow(0 4px 10px ${color}66);"><path d="M16 28.5l-2.1-1.9C6.4 19.8 1.5 15.3 1.5 9.7 1.5 5.2 5 1.7 9.5 1.7c2.5 0 4.9 1.2 6.5 3.1 1.6-1.9 4-3.1 6.5-3.1 4.5 0 8 3.5 8 8 0 5.6-4.9 10.1-12.4 16.9L16 28.5z"/></svg>`;
       heart.style.left = `${cx}px`;
       heart.style.top = `${cy}px`;
 
-      const angle = (i / 22) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+      const angle = (i / 14) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
       const dist = 120 + Math.random() * (Math.min(window.innerWidth, window.innerHeight) * 0.55);
       const hDx = Math.cos(angle) * dist;
       const hDy = Math.sin(angle) * dist;
@@ -328,6 +328,7 @@ class HeartCanvas {
     let phraseLoopIdx = 0;
     this.celebrationInterval = setInterval(() => {
       if (!this.isUnlocked) return;
+      if (layer.childElementCount > 22) return; // perf cap: skip tick when layer is full
 
       const p = phrases[phraseLoopIdx % phrases.length];
       phraseLoopIdx++;
@@ -353,7 +354,7 @@ class HeartCanvas {
       fHeart.style.setProperty('--h-rot', `${(Math.random() - 0.5) * 40}deg`);
       layer.appendChild(fHeart);
       setTimeout(() => fHeart.remove(), 5600);
-    }, 1200);
+    }, 1800);
   }
 
   spawnParticles(x, y, count = 2, isCelebration = false) {
@@ -390,8 +391,8 @@ class HeartCanvas {
       });
       this.ctx.closePath();
       this.ctx.fillStyle = `rgba(225, 29, 72, ${0.14 * this.fillProgress})`;
-      this.ctx.shadowColor = 'rgba(225,29,72,0.35)';
-      this.ctx.shadowBlur = 22 * this.fillProgress;
+      this.ctx.shadowColor = 'rgba(225,29,72,0.3)';
+      this.ctx.shadowBlur = 8 * this.fillProgress;
       this.ctx.fill();
       this.ctx.restore();
     }
@@ -408,8 +409,8 @@ class HeartCanvas {
     this.ctx.lineWidth = this.isUnlocked ? 3 : 2;
     this.ctx.setLineDash(this.isUnlocked ? [] : [4, 6]);
     if (this.isUnlocked) {
-      this.ctx.shadowColor = 'rgba(225,29,72,0.6)';
-      this.ctx.shadowBlur = 12;
+      this.ctx.shadowColor = 'rgba(225,29,72,0.5)';
+      this.ctx.shadowBlur = 6;
     }
     this.ctx.stroke();
     this.ctx.restore();
@@ -420,8 +421,8 @@ class HeartCanvas {
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
     this.ctx.strokeStyle = '#E11D48';
-    this.ctx.shadowColor = 'rgba(225,29,72,0.65)';
-    this.ctx.shadowBlur = 10;
+    this.ctx.shadowColor = 'rgba(225,29,72,0.5)';
+    this.ctx.shadowBlur = 4;
 
     this.strokes.forEach(stroke => {
       if (stroke.length < 2) return;
