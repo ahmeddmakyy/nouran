@@ -115,6 +115,10 @@
 
         <!-- Tears / Splash Particle Layer -->
         <div id="revenge-tears-layer" class="absolute inset-0 pointer-events-none overflow-hidden z-30"></div>
+
+        <!-- Party GIF after 3+ hits -->
+        <img id="revenge-party-gif" src="assets/gifs/party.gif" alt="احتفال" loading="lazy"
+             class="gif-sticker hidden absolute bottom-2 right-2 w-16 h-16 z-20">
       </div>
 
       <!-- Action Buttons -->
@@ -189,6 +193,8 @@
 
       <div class="reveal canvas-container mb-4 relative">
         <canvas id="heart-canvas"></canvas>
+        <img id="heart-sparkles-gif" src="assets/gifs/sparkles.gif" alt="لمعان" loading="lazy"
+             class="gif-sticker hidden absolute top-2 left-2 w-14 h-14 z-10">
       </div>
 
       <button id="heart-next-slide-btn" class="hidden px-6 py-2.5 rounded-full bg-rose-600 text-white font-bold text-xs shadow-md transition-all active:scale-95 relative z-20">
@@ -324,6 +330,7 @@
         <!-- بسبوسة -->
         <div class="nickname-item" data-emoji="🍯">
           <div class="nick-glow"></div>
+          <img src="assets/gifs/heart-beat.gif" alt="" loading="lazy" class="gif-sticker absolute -top-3 left-3 w-11 h-11">
           <div class="flex items-center mb-1">
             <span class="text-lg font-bold font-display text-amber-700">🍯 بسبوسة</span>
           </div>
@@ -335,6 +342,7 @@
         <!-- كيكة -->
         <div class="nickname-item" data-emoji="🍰">
           <div class="nick-glow"></div>
+          <img src="assets/gifs/love-bounce.gif" alt="" loading="lazy" class="gif-sticker absolute -top-3 left-3 w-11 h-11">
           <div class="flex items-center mb-1">
             <span class="text-lg font-bold font-display text-rose-700">🍰 كيكة</span>
           </div>
@@ -346,6 +354,7 @@
         <!-- نينو -->
         <div class="nickname-item" data-emoji="👑">
           <div class="nick-glow"></div>
+          <img src="assets/gifs/sparkles.gif" alt="" loading="lazy" class="gif-sticker absolute -top-3 left-3 w-11 h-11">
           <div class="flex items-center mb-1">
             <span class="text-lg font-bold font-display text-purple-700">👑 نينو</span>
           </div>
@@ -444,6 +453,11 @@
       
       <!-- Full-page Question Card -->
       <div id="decision-card" class="reveal clean-card w-full max-w-md py-10 px-6 sm:px-8 text-center my-auto shadow-xl">
+        <div class="flex items-center justify-center gap-2 mb-4">
+          <img src="assets/gifs/party.gif" alt="" loading="lazy" class="gif-sticker w-14 h-14">
+          <img src="assets/gifs/heart-beat.gif" alt="" loading="lazy" class="gif-sticker w-16 h-16">
+          <img src="assets/gifs/love-bounce.gif" alt="" loading="lazy" class="gif-sticker w-14 h-14">
+        </div>
         <h3 class="text-2xl sm:text-3xl font-bold font-display text-stone-900 mb-8 leading-snug">
           ها يا نينو.. صافية لبن؟ 🥺
         </h3>

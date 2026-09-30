@@ -40,19 +40,36 @@ document.addEventListener('DOMContentLoaded', () => {
     progressFill.style.width = `${p}%`;
   }
 
-  // Ambient hearts (perf: only 6, slow, transform+opacity only)
+  // Ambient hearts (full set — perf handled via transform-only animation + preload)
   if (ambientBox) {
     const icons = ['❤️', '💖', '✨', '🌸', '💕'];
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 10; i++) {
       const h = document.createElement('div');
       h.className = 'ambient-heart';
       h.textContent = icons[i % icons.length];
       h.style.left = `${Math.random() * 92}%`;
-      h.style.fontSize = `${11 + Math.random() * 14}px`;
-      h.style.animationDuration = `${13 + Math.random() * 9}s`;
-      h.style.animationDelay = `${Math.random() * 13}s`;
+      h.style.fontSize = `${12 + Math.random() * 18}px`;
+      h.style.animationDuration = `${9 + Math.random() * 9}s`;
+      h.style.animationDelay = `${Math.random() * 9}s`;
       ambientBox.appendChild(h);
     }
+  }
+
+  // Perf root fix: preload all celebration emoji PNGs once, so mid-burst
+  // image decode never janks the animation
+  if ('Image' in window) {
+    const emojiPreloads = [
+      'assets/emojis/heart.png', 'assets/emojis/smile_hearts.png',
+      'assets/emojis/heart_eyes.png', 'assets/emojis/kiss.png',
+      'assets/emojis/ring.png', 'assets/emojis/sparkles.png',
+      'assets/emojis/crown.png', 'assets/emojis/party.png',
+      'assets/emojis/revolving_hearts.png', 'assets/emojis/heart_hands.png',
+      'assets/emojis/pizza.png', 'assets/emojis/cake.png',
+      'assets/emojis/honey.png', 'assets/emojis/strawberry.png',
+      'assets/emojis/pleading.png'
+    ];
+    const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 1500));
+    idle(() => emojiPreloads.forEach(src => { const im = new Image(); im.src = src; }));
   }
 
   // 0b. Nicknames tap: bounce + flying emoji + haptic
@@ -157,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const phrases = ["بحبك ❤️", "خلاص بقى اتصالحي 🥺", "بموت فيكي 🥰", "وحشتيني أوي أوي أوي 🫂", "وحشتيني 💖"];
         const p = phrases[Math.floor(Math.random() * phrases.length)];
         const layer = document.getElementById('heart-celebration-layer');
-        if (layer && layer.childElementCount < 26) {
+        if (layer) {
           const rect = layer.getBoundingClientRect();
           const phraseEl = document.createElement('div');
           phraseEl.className = 'celebration-phrase-item';
@@ -337,8 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function spawnBurstEmoji(x, y, count = 30) {
     if (!emojiLayer) return;
-    // perf cap: never more than ~70 live emojis
-    count = Math.min(count, Math.max(0, 70 - emojiLayer.childElementCount));
     for (let i = 0; i < count; i++) {
       const img = document.createElement('img');
       img.src = appleEmojis[Math.floor(Math.random() * appleEmojis.length)];
@@ -367,7 +382,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function spawnFloatingEmoji() {
     if (!emojiLayer || emojiLayer.classList.contains('hidden')) return;
-    if (emojiLayer.childElementCount > 60) return; // perf cap
     const img = document.createElement('img');
     img.src = appleEmojis[Math.floor(Math.random() * appleEmojis.length)];
     img.className = 'apple-emoji-item apple-emoji-float';
@@ -423,15 +437,38 @@ document.addEventListener('DOMContentLoaded', () => {
         spawnBurstEmoji(cx, cy, 45);
         spawnLoveText(cx, cy - 40);
 
-        // Continuous stream of Apple emojis flying up (perf: slower + single spawn)
+        // Floating GIF stickers in the corners (looping, cleaned up after a while)
+        const gifStickers = [
+          { src: 'assets/gifs/heart-beat.gif', left: '8px', top: '70px' },
+          { src: 'assets/gifs/party.gif', right: '8px', top: '70px' },
+          { src: 'assets/gifs/love-bounce.gif', left: '8px', bottom: '24px' },
+          { src: 'assets/gifs/sparkles.gif', right: '8px', bottom: '24px' }
+        ];
+        gifStickers.forEach(g => {
+          const im = document.createElement('img');
+          im.src = g.src;
+          im.alt = '';
+          im.className = 'gif-float-sticker';
+          im.style.width = '64px';
+          im.style.height = '64px';
+          if (g.left) im.style.left = g.left;
+          if (g.right) im.style.right = g.right;
+          if (g.top) im.style.top = g.top;
+          if (g.bottom) im.style.bottom = g.bottom;
+          document.body.appendChild(im);
+          setTimeout(() => im.remove(), 12000);
+        });
+
+        // Continuous stream of Apple emojis flying up
         const streamInterval = setInterval(() => {
           spawnFloatingEmoji();
-        }, 450);
+          spawnFloatingEmoji();
+        }, 220);
 
         // Allow tapping anywhere to spawn more emojis + love text
         emojiLayer.addEventListener('pointerdown', (e) => {
           window.haptics(12);
-          spawnBurstEmoji(e.clientX, e.clientY, 10);
+          spawnBurstEmoji(e.clientX, e.clientY, 12);
           spawnLoveText(e.clientX, e.clientY);
         });
 
@@ -446,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (e) {}
           }
           if (window.confetti) {
-            window.confetti({ particleCount: 60, spread: 90, origin: { y: 0.5 } });
+            window.confetti({ particleCount: 90, spread: 100, origin: { y: 0.5 }, shapes: ['heart'] });
           }
         }, 2200);
 
@@ -471,26 +508,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 5. Instant Audio Autoplay - fires on first touch/interaction or instantly if allowed
+  // 5. Main song autoplay: instantly if the browser allows, otherwise on the
+  // very first interaction. Retried aggressively (gestures, tab return,
+  // delayed retries) because browsers block audible autoplay until the user
+  // interacts with the page — there is no way around that policy.
   const audio = document.getElementById('bg-music');
+  let audioUnlocked = false;
   const tryPlayAudio = () => {
+    if (audioUnlocked) return;
     if (audio && audio.paused) {
       audio.volume = 1.0;
-      audio.play().then(() => {
-        if (window.musicPlayer) {
-          window.musicPlayer.isPlaying = true;
-          window.musicPlayer.updateUI();
-        }
-      }).catch(() => {
-        // Autoplay policy prevented, will play on first touch
-      });
+      const pr = audio.play();
+      if (pr && pr.then) {
+        pr.then(() => {
+          audioUnlocked = true;
+          if (window.musicPlayer) {
+            window.musicPlayer.isPlaying = true;
+            window.musicPlayer.updateUI();
+          }
+        }).catch(() => {
+          // Autoplay policy prevented, will play on first touch
+        });
+      } else {
+        audioUnlocked = true;
+      }
+    } else if (audio && !audio.paused) {
+      audioUnlocked = true;
     }
   };
 
   tryPlayAudio();
+  // A few delayed retries in case the element wasn't ready yet
+  [800, 2000, 4000].forEach(ms => setTimeout(tryPlayAudio, ms));
   const touchEvents = ['pointerdown', 'touchstart', 'touchend', 'mousedown', 'click', 'scroll', 'keydown'];
   touchEvents.forEach(evt => {
-    window.addEventListener(evt, tryPlayAudio, { capture: true, once: true });
-    document.addEventListener(evt, tryPlayAudio, { capture: true, once: true });
+    window.addEventListener(evt, tryPlayAudio, { capture: true });
+    document.addEventListener(evt, tryPlayAudio, { capture: true });
   });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) tryPlayAudio();
+  });
+  window.addEventListener('pageshow', tryPlayAudio);
 });

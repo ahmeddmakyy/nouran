@@ -22,6 +22,7 @@ class HeartCanvas {
 
     this.initCanvas();
     this.generateWaypoints();
+    this.renderGuideCache(false);
     this.bindEvents();
     this.loop();
   }
@@ -38,6 +39,41 @@ class HeartCanvas {
 
     this.center = { x: this.width / 2, y: this.height / 2 - 8 };
     this.scale = this.width / 37;
+
+    // Perf root fix: the guide outline never changes per-frame, so pre-render
+    // it once to an offscreen canvas instead of re-stroking + shadowBlur 60x/sec
+    this.guideCache = document.createElement('canvas');
+    this.guideCache.width = this.canvas.width;
+    this.guideCache.height = this.canvas.height;
+    this._cacheUnlocked = null;
+  }
+
+  renderGuideCache(unlocked) {
+    const c = this.guideCache.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, this.width, this.height);
+    c.beginPath();
+    this.guidePoints.forEach((p, idx) => {
+      if (idx === 0) c.moveTo(p.x, p.y);
+      else c.lineTo(p.x, p.y);
+    });
+    c.closePath();
+    if (unlocked) {
+      // baked glow: wide soft underlay + crisp core (no shadowBlur needed)
+      c.save();
+      c.strokeStyle = 'rgba(225, 29, 72, 0.16)';
+      c.lineWidth = 9;
+      c.stroke();
+      c.restore();
+    }
+    c.save();
+    c.strokeStyle = unlocked ? 'rgba(225, 29, 72, 0.55)' : 'rgba(225, 29, 72, 0.22)';
+    c.lineWidth = unlocked ? 3 : 2;
+    c.setLineDash(unlocked ? [] : [4, 6]);
+    c.stroke();
+    c.restore();
+    this._cacheUnlocked = unlocked;
   }
 
   generateWaypoints() {
@@ -190,6 +226,7 @@ class HeartCanvas {
 
   onComplete() {
     this.isUnlocked = true;
+    this.renderGuideCache(true);
 
     // Mark all waypoints connected for seamless visuals
     this.waypoints.forEach(w => w.connected = true);
@@ -203,6 +240,9 @@ class HeartCanvas {
       this.nextBtn.classList.add('animate-bounce');
       setTimeout(() => this.nextBtn.classList.remove('animate-bounce'), 2500);
     }
+
+    const sparkGif = document.getElementById('heart-sparkles-gif');
+    if (sparkGif) sparkGif.classList.remove('hidden');
 
     // Play victory sound
     if (window.soundEngine) {
@@ -243,21 +283,21 @@ class HeartCanvas {
 
     const heartColors = ['#E11D48', '#F43F5E', '#FB7185', '#FDA4AF', '#BE123C'];
 
-    // 1. Burst repeated hearts radially from center of the screen (perf: 14 not 22)
+    // 1. Burst repeated hearts radially from center of the screen
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight * 0.45;
 
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 22; i++) {
       const heart = document.createElement('div');
       heart.className = 'celebration-heart-clone celebration-heart-burst';
-      const size = 26 + Math.random() * 44;
+      const size = 26 + Math.random() * 48;
       const color = heartColors[Math.floor(Math.random() * heartColors.length)];
 
       heart.innerHTML = `<svg viewBox="0 0 32 32" style="width:${size}px; height:${size}px; fill:${color}; filter:drop-shadow(0 4px 10px ${color}66);"><path d="M16 28.5l-2.1-1.9C6.4 19.8 1.5 15.3 1.5 9.7 1.5 5.2 5 1.7 9.5 1.7c2.5 0 4.9 1.2 6.5 3.1 1.6-1.9 4-3.1 6.5-3.1 4.5 0 8 3.5 8 8 0 5.6-4.9 10.1-12.4 16.9L16 28.5z"/></svg>`;
       heart.style.left = `${cx}px`;
       heart.style.top = `${cy}px`;
 
-      const angle = (i / 14) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+      const angle = (i / 22) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
       const dist = 120 + Math.random() * (Math.min(window.innerWidth, window.innerHeight) * 0.55);
       const hDx = Math.cos(angle) * dist;
       const hDy = Math.sin(angle) * dist;
@@ -328,7 +368,6 @@ class HeartCanvas {
     let phraseLoopIdx = 0;
     this.celebrationInterval = setInterval(() => {
       if (!this.isUnlocked) return;
-      if (layer.childElementCount > 22) return; // perf cap: skip tick when layer is full
 
       const p = phrases[phraseLoopIdx % phrases.length];
       phraseLoopIdx++;
@@ -354,10 +393,15 @@ class HeartCanvas {
       fHeart.style.setProperty('--h-rot', `${(Math.random() - 0.5) * 40}deg`);
       layer.appendChild(fHeart);
       setTimeout(() => fHeart.remove(), 5600);
-    }, 1800);
+    }, 1200);
   }
 
   spawnParticles(x, y, count = 2, isCelebration = false) {
+    // Perf root fix: bound the array (fast scribbling could pile thousands);
+    // dropping the oldest is visually identical
+    if (this.particles.length > 220) {
+      this.particles.splice(0, this.particles.length - 220);
+    }
     const icons = ['❤️', '✨', '💖', '⭐', '🌸'];
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
@@ -378,7 +422,7 @@ class HeartCanvas {
     this.ctx.clearRect(0, 0, this.width, this.height);
     const time = Date.now() * 0.003;
 
-    // 0. Fill morph when unlocked
+    // 0. Fill morph when unlocked (single plain fill — no shadow cost)
     if (this.isUnlocked && this.fillProgress < 1) {
       this.fillProgress = Math.min(1, this.fillProgress + 0.012);
     }
@@ -391,48 +435,43 @@ class HeartCanvas {
       });
       this.ctx.closePath();
       this.ctx.fillStyle = `rgba(225, 29, 72, ${0.14 * this.fillProgress})`;
-      this.ctx.shadowColor = 'rgba(225,29,72,0.3)';
-      this.ctx.shadowBlur = 8 * this.fillProgress;
       this.ctx.fill();
       this.ctx.restore();
     }
 
-    // 1. Draw dashed guide heart outline connecting all waypoints
-    this.ctx.save();
-    this.ctx.beginPath();
-    this.guidePoints.forEach((p, idx) => {
-      if (idx === 0) this.ctx.moveTo(p.x, p.y);
-      else this.ctx.lineTo(p.x, p.y);
-    });
-    this.ctx.closePath();
-    this.ctx.strokeStyle = this.isUnlocked ? 'rgba(225, 29, 72, 0.55)' : 'rgba(225, 29, 72, 0.22)';
-    this.ctx.lineWidth = this.isUnlocked ? 3 : 2;
-    this.ctx.setLineDash(this.isUnlocked ? [] : [4, 6]);
-    if (this.isUnlocked) {
-      this.ctx.shadowColor = 'rgba(225,29,72,0.5)';
-      this.ctx.shadowBlur = 6;
+    // 1. Guide outline: one cached blit (pre-rendered, glow already baked in)
+    if (this._cacheUnlocked !== this.isUnlocked) {
+      this.renderGuideCache(this.isUnlocked);
     }
-    this.ctx.stroke();
+    this.ctx.save();
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.ctx.drawImage(this.guideCache, 0, 0);
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.ctx.restore();
 
-    // 2. Draw user hand strokes with glow trail
+    // 2. User strokes: fake glow = wide soft underlay + crisp core.
+    // Same look as shadowBlur, but zero per-frame shadow cost.
+    const tracePath = () => {
+      this.strokes.forEach(stroke => {
+        if (stroke.length < 2) return;
+        this.ctx.beginPath();
+        this.ctx.moveTo(stroke[0].x, stroke[0].y);
+        for (let i = 1; i < stroke.length; i++) {
+          this.ctx.lineTo(stroke[i].x, stroke[i].y);
+        }
+        this.ctx.stroke();
+      });
+    };
     this.ctx.save();
-    this.ctx.lineWidth = 5;
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
+    this.ctx.strokeStyle = 'rgba(225, 29, 72, 0.22)';
+    this.ctx.lineWidth = 10;
+    tracePath();
     this.ctx.strokeStyle = '#E11D48';
-    this.ctx.shadowColor = 'rgba(225,29,72,0.5)';
-    this.ctx.shadowBlur = 4;
-
-    this.strokes.forEach(stroke => {
-      if (stroke.length < 2) return;
-      this.ctx.beginPath();
-      this.ctx.moveTo(stroke[0].x, stroke[0].y);
-      for (let i = 1; i < stroke.length; i++) {
-        this.ctx.lineTo(stroke[i].x, stroke[i].y);
-      }
-      this.ctx.stroke();
-    });
+    this.ctx.lineWidth = 5;
+    tracePath();
     this.ctx.restore();
 
     // 3. Draw Connect-the-Dots Waypoint Circles
@@ -441,12 +480,15 @@ class HeartCanvas {
       const isConn = node.connected || this.isUnlocked;
 
       if (isConn) {
-        // Connected Node: Solid glowing rose badge with white center
+        // Connected Node: solid rose badge + baked halo (no shadowBlur cost)
+        this.ctx.beginPath();
+        this.ctx.arc(node.x, node.y, 12, 0, Math.PI * 2);
+        this.ctx.fillStyle = 'rgba(225, 29, 72, 0.18)';
+        this.ctx.fill();
+
         this.ctx.beginPath();
         this.ctx.arc(node.x, node.y, 8, 0, Math.PI * 2);
         this.ctx.fillStyle = '#E11D48';
-        this.ctx.shadowColor = 'rgba(225, 29, 72, 0.5)';
-        this.ctx.shadowBlur = 8;
         this.ctx.fill();
 
         // Inner white dot

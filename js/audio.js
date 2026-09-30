@@ -233,16 +233,41 @@ class MusicPlayer {
       this.isPlaying = false;
       this.updateUI();
     });
+
+    // Resume from the same spot when coming back to the tab
+    // (browsers suspend audio while hidden)
+    this._hiddenWhilePlaying = false;
+    document.addEventListener('visibilitychange', () => {
+      if (!this.audio) return;
+      if (document.hidden) {
+        this._hiddenWhilePlaying = this.isPlaying;
+      } else if (this._hiddenWhilePlaying) {
+        this._hiddenWhilePlaying = false;
+        this.play();
+      }
+    });
   }
 
   play() {
     if (!this.audio) return;
-    this.audio.play().then(() => {
+    this.audio.volume = 1.0;
+    const pr = this.audio.play();
+    if (pr && pr.catch) {
+      pr.then(() => {
+        this.isPlaying = true;
+        this.updateUI();
+      }).catch(err => {
+        console.log("Audio autoplay prevented by browser policy:", err);
+      });
+    } else if (pr && pr.then) {
+      pr.then(() => {
+        this.isPlaying = true;
+        this.updateUI();
+      }).catch(() => {});
+    } else {
       this.isPlaying = true;
       this.updateUI();
-    }).catch(err => {
-      console.log("Audio autoplay prevented by browser policy:", err);
-    });
+    }
   }
 
   pause() {
@@ -691,6 +716,11 @@ class RevengePlayer {
       this.tapPrompt.classList.add('hidden');
     }
 
+    if (this.hitCount >= 3) {
+      const partyGif = document.getElementById('revenge-party-gif');
+      if (partyGif) partyGif.classList.remove('hidden');
+    }
+
     if (this.btnText) {
       this.btnText.textContent = 'دوسي تاني لو لسه زعلانة 🥺';
     }
@@ -711,20 +741,20 @@ class RevengePlayer {
     if (this._tearStream || !this.stage) return;
     this._tearStream = setInterval(() => {
       if (!this.cryingImg || this.cryingImg.classList.contains('hidden')) return;
-      if (this.stage.querySelectorAll('.crying-tear-stream').length > 8) return; // perf cap
-      const t = document.createElement('div');
-      t.className = 'crying-tear-stream';
-      t.style.left = `${38 + Math.random() * 24}%`;
-      this.stage.appendChild(t);
-      setTimeout(() => t.remove(), 1150);
-    }, 700);
+      for (let i = 0; i < 2; i++) {
+        const t = document.createElement('div');
+        t.className = 'crying-tear-stream';
+        t.style.left = `${38 + Math.random() * 24}%`;
+        this.stage.appendChild(t);
+        setTimeout(() => t.remove(), 1150);
+      }
+    }, 450);
   }
 
   spawnTears() {
     if (!this.tearsLayer) return;
-    if (this.tearsLayer.childElementCount > 30) return; // perf cap
     const icons = ['💧', '😭', '💔', '💦', '🥺'];
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 14; i++) {
       const drop = document.createElement('div');
       drop.className = 'tear-drop-particle';
       drop.textContent = icons[Math.floor(Math.random() * icons.length)];
@@ -746,7 +776,9 @@ class RevengePlayer {
   playAudio() {
     if (!this.audio) return;
 
-    // Pause background music safely
+    // Pause background music, remembering its exact spot.
+    // pause()/play() never touch currentTime, so resume continues
+    // from where it stopped — never from the start.
     const bgAudio = document.getElementById('bg-music');
     if (bgAudio && !bgAudio.paused) {
       this.wasBgMusicPlaying = true;
@@ -758,7 +790,8 @@ class RevengePlayer {
         }
       } catch (e) {}
     } else {
-      this.wasBgMusicPlaying = true;
+      // Was already paused (e.g. user muted it) — don't auto-start it later
+      this.wasBgMusicPlaying = false;
     }
 
     try {
