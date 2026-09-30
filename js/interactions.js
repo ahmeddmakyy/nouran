@@ -22,6 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (i === index) d.classList.add('active');
         else d.classList.remove('active');
       });
+
+      // If user scrolls away from Slide 5 (index 4) while special sound is playing, pause it and resume bg music!
+      if (index !== 4 && window.specialSoundPlayer && window.specialSoundPlayer.isPlaying) {
+        window.specialSoundPlayer.pause(true);
+      }
     });
   }
 

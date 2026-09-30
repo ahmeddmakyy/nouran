@@ -299,7 +299,161 @@ class MusicPlayer {
   }
 }
 
+// Special Voice/Sound Note Player (dy-ny-hbk-dy-ny.mp3)
+class SpecialSoundPlayer {
+  constructor() {
+    this.audio = document.getElementById('special-sound');
+    this.btn = document.getElementById('special-sound-btn');
+    this.btnText = document.getElementById('special-sound-btn-text');
+    this.iconPlay = this.btn ? this.btn.querySelector('.special-icon-play') : null;
+    this.iconPause = this.btn ? this.btn.querySelector('.special-icon-pause') : null;
+    this.waveBars = document.getElementById('special-wave-bars');
+    this.progressBar = document.getElementById('special-sound-progress');
+    this.curTimeEl = document.getElementById('special-sound-cur-time');
+    this.durTimeEl = document.getElementById('special-sound-dur-time');
+
+    this.isPlaying = false;
+    this.wasBgMusicPlaying = false;
+
+    this.initEvents();
+  }
+
+  initEvents() {
+    if (!this.audio || !this.btn) return;
+
+    this.btn.addEventListener('click', () => {
+      this.toggle();
+    });
+
+    this.audio.addEventListener('timeupdate', () => {
+      this.updateProgress();
+    });
+
+    this.audio.addEventListener('ended', () => {
+      this.handleEnded();
+    });
+  }
+
+  play() {
+    if (!this.audio) return;
+
+    // 1. Automatically pause the main background music
+    const bgAudio = document.getElementById('bg-music');
+    if (bgAudio && !bgAudio.paused) {
+      this.wasBgMusicPlaying = true;
+      if (window.musicPlayer) {
+        window.musicPlayer.pause();
+      } else {
+        bgAudio.pause();
+      }
+    }
+
+    // 2. Play special sound
+    this.audio.play().then(() => {
+      this.isPlaying = true;
+      this.updateUI();
+    }).catch(err => {
+      console.log("Special sound playback error:", err);
+    });
+  }
+
+  pause(resumeBg = true) {
+    if (!this.audio) return;
+    this.audio.pause();
+    this.isPlaying = false;
+    this.updateUI();
+
+    // 3. Resume main background music if it was paused
+    if (resumeBg && this.wasBgMusicPlaying) {
+      const bgAudio = document.getElementById('bg-music');
+      if (bgAudio) {
+        if (window.musicPlayer) {
+          window.musicPlayer.play();
+        } else {
+          bgAudio.play().catch(() => {});
+        }
+      }
+      this.wasBgMusicPlaying = false;
+    }
+  }
+
+  toggle() {
+    if (this.isPlaying) {
+      this.pause(true);
+    } else {
+      this.play();
+    }
+  }
+
+  handleEnded() {
+    this.isPlaying = false;
+    this.updateUI();
+    if (this.progressBar) this.progressBar.style.width = '0%';
+    if (this.curTimeEl) this.curTimeEl.textContent = '00:00';
+
+    // When the sound ends, automatically resume main song where it paused
+    if (this.wasBgMusicPlaying) {
+      const bgAudio = document.getElementById('bg-music');
+      if (bgAudio) {
+        if (window.musicPlayer) {
+          window.musicPlayer.play();
+        } else {
+          bgAudio.play().catch(() => {});
+        }
+      }
+      this.wasBgMusicPlaying = false;
+    }
+
+    if (window.confetti) {
+      window.confetti({ particleCount: 35, spread: 60, origin: { y: 0.6 } });
+    }
+  }
+
+  updateUI() {
+    if (this.iconPlay && this.iconPause) {
+      this.iconPlay.style.display = this.isPlaying ? 'none' : 'block';
+      this.iconPause.style.display = this.isPlaying ? 'block' : 'none';
+    }
+
+    if (this.btnText) {
+      this.btnText.textContent = this.isPlaying ? 'شغال أهو.. اسمعي 🎧' : 'دوس على الزرار دا 🎵';
+    }
+
+    if (this.waveBars) {
+      if (this.isPlaying) {
+        this.waveBars.classList.add('playing');
+      } else {
+        this.waveBars.classList.remove('playing');
+      }
+    }
+  }
+
+  updateProgress() {
+    if (!this.audio) return;
+    const cur = this.audio.currentTime;
+    const dur = this.audio.duration || 29.3;
+
+    if (this.progressBar) {
+      const pct = (cur / dur) * 100;
+      this.progressBar.style.width = `${pct}%`;
+    }
+
+    if (this.curTimeEl) {
+      const curM = Math.floor(cur / 60);
+      const curS = Math.floor(cur % 60).toString().padStart(2, '0');
+      this.curTimeEl.textContent = `${curM.toString().padStart(2, '0')}:${curS}`;
+    }
+
+    if (this.durTimeEl && !isNaN(this.audio.duration)) {
+      const durM = Math.floor(this.audio.duration / 60);
+      const durS = Math.floor(this.audio.duration % 60).toString().padStart(2, '0');
+      this.durTimeEl.textContent = `${durM.toString().padStart(2, '0')}:${durS}`;
+    }
+  }
+}
+
 window.soundEngine = new SoundEngine();
 document.addEventListener('DOMContentLoaded', () => {
   window.musicPlayer = new MusicPlayer();
+  window.specialSoundPlayer = new SpecialSoundPlayer();
 });

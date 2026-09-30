@@ -36,6 +36,11 @@
     })();
   </script>
 
+  <!-- Special Sound Audio Element -->
+  <audio id="special-sound" preload="auto" playsinline>
+    <source src="assets/audio/dy-ny-hbk-dy-ny.mp3" type="audio/mpeg">
+  </audio>
+
   <!-- Minimal Audio Player Dock (Top Right) -->
   <div class="minimal-audio-dock">
     <div class="mini-vinyl" id="vinyl-disc">
@@ -58,6 +63,7 @@
     <div class="slide-dot" title="القلب"></div>
     <div class="slide-dot" title="الذكريات"></div>
     <div class="slide-dot" title="الألقاب"></div>
+    <div class="slide-dot" title="الرسالة الصوتية"></div>
     <div class="slide-dot" title="الصلح"></div>
   </div>
 
@@ -283,12 +289,72 @@
       </div>
 
       <div class="swipe-up-hint">
+        <span>اسحبي للصوت</span>
+        <span>👆</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: Special Sound Message -->
+    <section class="story-slide text-center" id="slide-sound">
+      <div class="mb-3">
+        <span class="pixel-badge">رسالة مخصوص 🎵</span>
+      </div>
+
+      <h2 class="text-2xl sm:text-3xl font-bold font-display text-stone-900 mb-2">
+        اسمعي دي يا نينو..
+      </h2>
+
+      <p class="text-stone-600 text-xs sm:text-sm mb-6 font-medium">
+        دوسي على الزرار دا واسمعي 🎧
+      </p>
+
+      <!-- Sound Player Card -->
+      <div class="clean-card w-full max-w-sm py-8 px-6 text-center shadow-lg relative overflow-hidden">
+        
+        <!-- Big Play Button -->
+        <button id="special-sound-btn" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-bold text-base shadow-lg shadow-rose-600/30 transition-all active:scale-95 flex items-center justify-center gap-3 select-none mx-auto cursor-pointer">
+          <!-- Play SVG Icon -->
+          <svg class="special-icon-play w-5 h-5 fill-current" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          <!-- Pause SVG Icon -->
+          <svg class="special-icon-pause w-5 h-5 fill-current hidden" viewBox="0 0 24 24">
+            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+          </svg>
+          <span id="special-sound-btn-text">دوس على الزرار دا 🎵</span>
+        </button>
+
+        <!-- Sound Waves / Equalizer Animation -->
+        <div id="special-wave-bars" class="sound-wave-bars mt-5 flex items-center justify-center gap-1.5 h-8">
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+        </div>
+
+        <!-- Progress bar & timer -->
+        <div class="mt-4">
+          <div class="w-full bg-stone-100 rounded-full h-1.5 overflow-hidden">
+            <div id="special-sound-progress" class="bg-rose-500 h-full rounded-full w-0 transition-all duration-100"></div>
+          </div>
+          <div class="flex justify-between items-center text-[11px] text-stone-600 font-semibold font-num mt-1.5 px-0.5">
+            <span id="special-sound-cur-time">00:00</span>
+            <span id="special-sound-dur-time">00:29</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="swipe-up-hint">
         <span>اسحبي للصلح</span>
         <span>👆</span>
       </div>
     </section>
 
-    <!-- SLIDE 5: The Big Question & Apple Emojis Explosion -->
+    <!-- SLIDE 6: The Big Question & Apple Emojis Explosion -->
     <section class="story-slide text-center relative" id="slide-finale">
       
       <!-- Full-page Question Card -->
