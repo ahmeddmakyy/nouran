@@ -12,6 +12,7 @@ class HeartCanvas {
     this.waypoints = [];
     this.guidePoints = [];
     this.connectedNodes = new Set();
+    this.coveredGuides = new Set();
     this.isUnlocked = false;
     this.celebrationInterval = null;
     this.fillProgress = 0;
@@ -123,6 +124,7 @@ class HeartCanvas {
       e.preventDefault();
       this.isDrawing = true;
       const raw = getPos(e);
+      this.trackCoverage(raw);
       const pos = this.checkNodes(raw);
       this.currentStroke = [pos];
       this.strokes.push(this.currentStroke);
@@ -133,6 +135,7 @@ class HeartCanvas {
       if (!this.isDrawing) return;
       e.preventDefault();
       const raw = getPos(e);
+      this.trackCoverage(raw);
       const pos = this.checkNodes(raw);
       this.currentStroke.push(pos);
       this.spawnParticles(pos.x, pos.y, 1);
@@ -154,6 +157,26 @@ class HeartCanvas {
     if (container) {
       container.addEventListener('mousedown', start);
       container.addEventListener('touchstart', start, { passive: false });
+    }
+  }
+
+  // Root fix for early celebration: nodes connect on mere proximity, so a
+  // couple of scribbles could unlock the heart. Instead, completion is gated
+  // on actually TRACING the outline — covering ~85% of the dense guide path.
+  trackCoverage(rawPos) {
+    if (this.isUnlocked) return;
+    const radius = 20;
+    for (let i = 0; i < this.guidePoints.length; i++) {
+      if (this.coveredGuides.has(i)) continue;
+      const g = this.guidePoints[i];
+      const dx = g.x - rawPos.x;
+      const dy = g.y - rawPos.y;
+      if (dx * dx + dy * dy < radius * radius) {
+        this.coveredGuides.add(i);
+      }
+    }
+    if (!this.isUnlocked) {
+      this.evaluateProgress();
     }
   }
 
@@ -199,27 +222,20 @@ class HeartCanvas {
   }
 
   evaluateProgress() {
-    const coreRight = [2, 3, 4, 5];
-    const coreLeft = [9, 10, 11, 12];
+    const totalGuides = this.guidePoints.length; // 64
+    const covered = this.coveredGuides.size;
+    const pct = Math.round((covered / totalGuides) * 100);
 
-    const rightCoreCount = coreRight.filter(id => this.connectedNodes.has(id)).length;
-    const leftCoreCount = coreLeft.filter(id => this.connectedNodes.has(id)).length;
-    const totalCount = this.connectedNodes.size;
-
-    // Update dynamic guidance hint
-    if (this.hintEl) {
-      if (rightCoreCount >= 3 && leftCoreCount < 2) {
-        this.hintEl.innerHTML = '<span class="text-rose-600 font-semibold">شاطرة! وصلي النقط الباقية على الشمال كمان 😉</span>';
-      } else if (leftCoreCount >= 3 && rightCoreCount < 2) {
-        this.hintEl.innerHTML = '<span class="text-rose-600 font-semibold">شاطرة! وصلي النقط الباقية على اليمين كمان 😉</span>';
-      } else if (totalCount < 11) {
-        this.hintEl.innerHTML = `وصلي النقط ببعض عشان تفتحي القلب ❤️ (${totalCount} / 14)`;
+    // Update dynamic guidance hint with real drawing progress
+    if (this.hintEl && !this.isUnlocked) {
+      if (pct < 100) {
+        this.hintEl.innerHTML = `كملي رسم القلب يا مزة ❤️ (${pct}٪)`;
       }
     }
 
-    // Must connect BOTH right lobe (>= 3 of 4 core) AND left lobe (>= 3 of 4 core), and total >= 11
-    // Half a heart can NEVER trigger this!
-    if (rightCoreCount >= 3 && leftCoreCount >= 3 && totalCount >= 11 && !this.isUnlocked) {
+    // Unlock ONLY when the outline is actually traced (>= 80%).
+    // Dots alone can never trigger this — you must draw the whole heart.
+    if (covered >= Math.ceil(totalGuides * 0.80) && !this.isUnlocked) {
       this.onComplete();
     }
   }
