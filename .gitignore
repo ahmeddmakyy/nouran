@@ -1,0 +1,5 @@
+# Ignore test scripts and screenshots
+test_page.py
+*.png
+__pycache__/
+.DS_Store
