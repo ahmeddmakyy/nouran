@@ -651,7 +651,7 @@ class RevengePlayer {
       const phrases = [
         "أنا عملت إيه بس؟! 😭💔",
         "حراااام عليكي يا نينو! 🥺",
-        "طب اضربي تاني لو هترتاحي 🤕",
+        "طب دوسي تاني لو هترتاحي 🥺",
         "والله بحبك ومقدرش على زعلك 😭❤️"
       ];
       this.speechBubble.textContent = phrases[(this.hitCount - 1) % phrases.length];
@@ -666,7 +666,7 @@ class RevengePlayer {
     }
 
     if (this.btnText) {
-      this.btnText.textContent = 'اضربي تاني لو لسه زعلانة 🥊';
+      this.btnText.textContent = 'دوسي تاني لو لسه زعلانة 🥺';
     }
 
     if (this.nextBtn) {
