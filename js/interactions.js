@@ -23,9 +23,22 @@ document.addEventListener('DOMContentLoaded', () => {
         else d.classList.remove('active');
       });
 
-      // If user scrolls away from Slide 5 (index 4) while special sound is playing, pause it and resume bg music!
-      if (index !== 4 && window.specialSoundPlayer && window.specialSoundPlayer.isPlaying) {
-        window.specialSoundPlayer.pause(true);
+      // Slide 2 celebration interval management - only run when user is on Slide 2
+      if (window.heartCanvas) {
+        if (index === 1) {
+          window.heartCanvas.resumeCelebration();
+        } else {
+          window.heartCanvas.pauseCelebration();
+        }
+      }
+
+      // If user scrolls away from Slide 5 while special sound is playing, pause it and resume bg music!
+      const slideSound = document.getElementById('slide-sound');
+      if (slideSound && window.specialSoundPlayer && window.specialSoundPlayer.isPlaying) {
+        const sRect = slideSound.getBoundingClientRect();
+        if (sRect.bottom < 80 || sRect.top > window.innerHeight - 80) {
+          window.specialSoundPlayer.pause(true);
+        }
       }
     });
   }
@@ -46,11 +59,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const p = phrases[Math.floor(Math.random() * phrases.length)];
         const layer = document.getElementById('heart-celebration-layer');
         if (layer) {
+          const rect = layer.getBoundingClientRect();
           const phraseEl = document.createElement('div');
           phraseEl.className = 'celebration-phrase-item';
           phraseEl.textContent = p;
-          phraseEl.style.left = `${e.clientX}px`;
-          phraseEl.style.top = `${e.clientY}px`;
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          phraseEl.style.left = `${x}px`;
+          phraseEl.style.top = `${y}px`;
           layer.appendChild(phraseEl);
           setTimeout(() => phraseEl.remove(), 4900);
         }
@@ -183,7 +199,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'assets/emojis/pizza.png',
     'assets/emojis/cake.png',
     'assets/emojis/honey.png',
-    'assets/emojis/strawberry.png'
+    'assets/emojis/strawberry.png',
+    'assets/emojis/pleading.png'
   ];
 
   function spawnBurstEmoji(x, y, count = 30) {

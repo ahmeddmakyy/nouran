@@ -21,7 +21,7 @@
   <div class="paper-grain"></div>
 
   <!-- Audio Element (Optimized for instant streaming) -->
-  <audio id="bg-music" preload="auto" autoplay loop playsinline>
+  <audio id="bg-music" src="assets/audio/wala-ash-wala-kan.mp3" preload="auto" autoplay loop playsinline webkit-playsinline>
     <source src="assets/audio/wala-ash-wala-kan.mp3" type="audio/mpeg">
     <source src="assets/audio/wala-ash-wala-kan.opus" type="audio/ogg">
   </audio>
@@ -37,7 +37,7 @@
   </script>
 
   <!-- Special Sound Audio Element -->
-  <audio id="special-sound" preload="auto" playsinline>
+  <audio id="special-sound" src="assets/audio/dy-ny-hbk-dy-ny.mp3" preload="auto" playsinline webkit-playsinline>
     <source src="assets/audio/dy-ny-hbk-dy-ny.mp3" type="audio/mpeg">
   </audio>
 
@@ -135,8 +135,8 @@
         <span>👆</span>
       </div>
 
-      <!-- Grand Heart Celebration Layer (Repeated Hearts & Flying Phrases) -->
-      <div id="heart-celebration-layer" class="hidden fixed inset-0 pointer-events-none z-30 overflow-hidden"></div>
+      <!-- Grand Heart Celebration Layer (Repeated Hearts & Flying Phrases - strictly inside Slide 2) -->
+      <div id="heart-celebration-layer" class="hidden absolute inset-0 pointer-events-none z-20 overflow-hidden"></div>
     </section>
 
     <!-- SLIDE 3: Polaroid Photo Memories -->
@@ -308,24 +308,36 @@
         دوسي على الزرار دا واسمعي 🎧
       </p>
 
-      <!-- Sound Player Card -->
-      <div class="clean-card w-full max-w-sm py-8 px-6 text-center shadow-lg relative overflow-hidden">
+      <!-- Real Tactile Switch Panel -->
+      <div class="tactile-switch-panel w-full max-w-sm mx-auto p-6 rounded-3xl shadow-xl relative select-none">
         
-        <!-- Big Play Button -->
-        <button id="special-sound-btn" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-bold text-base shadow-lg shadow-rose-600/30 transition-all active:scale-95 flex items-center justify-center gap-3 select-none mx-auto cursor-pointer">
-          <!-- Play SVG Icon -->
-          <svg class="special-icon-play w-5 h-5 fill-current" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z"/>
-          </svg>
-          <!-- Pause SVG Icon -->
-          <svg class="special-icon-pause w-5 h-5 fill-current hidden" viewBox="0 0 24 24">
-            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-          </svg>
-          <span id="special-sound-btn-text">دوس على الزرار دا 🎵</span>
-        </button>
+        <!-- Screws in corners for retro audio chassis look -->
+        <div class="chassis-screw top-2.5 left-2.5"></div>
+        <div class="chassis-screw top-2.5 right-2.5"></div>
+        <div class="chassis-screw bottom-2.5 left-2.5"></div>
+        <div class="chassis-screw bottom-2.5 right-2.5"></div>
+
+        <!-- Header status with LED light -->
+        <div class="flex items-center justify-between px-2 mb-4">
+          <span class="text-[11px] font-bold tracking-wider uppercase text-stone-600 font-mono">AUDIO UNIT // NOURAN-01</span>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-bold text-stone-600" id="switch-status-label">OFF</span>
+            <div id="switch-led" class="led-indicator led-off"></div>
+          </div>
+        </div>
+
+        <!-- The 3D Tactile Rocker Switch / Button -->
+        <div class="switch-well p-2 rounded-2xl mb-4">
+          <button id="special-sound-btn" class="tactile-button w-full py-5 px-6 rounded-xl flex items-center justify-center gap-3 cursor-pointer select-none">
+            <span class="switch-rocker-icon text-xl" id="switch-icon">🔊</span>
+            <span id="special-sound-btn-text" class="font-extrabold text-sm sm:text-base tracking-wide text-stone-800">
+              اضغطي هنا لتشغيل الصوت 🎵
+            </span>
+          </button>
+        </div>
 
         <!-- Sound Waves / Equalizer Animation -->
-        <div id="special-wave-bars" class="sound-wave-bars mt-5 flex items-center justify-center gap-1.5 h-8">
+        <div id="special-wave-bars" class="sound-wave-bars flex items-center justify-center gap-1.5 h-8 my-3">
           <span class="wave-bar"></span>
           <span class="wave-bar"></span>
           <span class="wave-bar"></span>
@@ -336,11 +348,11 @@
         </div>
 
         <!-- Progress bar & timer -->
-        <div class="mt-4">
-          <div class="w-full bg-stone-100 rounded-full h-1.5 overflow-hidden">
+        <div class="mt-2 px-1">
+          <div class="w-full bg-stone-200/70 rounded-full h-2 overflow-hidden shadow-inner">
             <div id="special-sound-progress" class="bg-rose-500 h-full rounded-full w-0 transition-all duration-100"></div>
           </div>
-          <div class="flex justify-between items-center text-[11px] text-stone-600 font-semibold font-num mt-1.5 px-0.5">
+          <div class="flex justify-between items-center text-[11px] text-stone-600 font-bold font-num mt-1.5 px-0.5">
             <span id="special-sound-cur-time">00:00</span>
             <span id="special-sound-dur-time">00:29</span>
           </div>

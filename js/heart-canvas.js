@@ -13,6 +13,7 @@ class HeartCanvas {
     this.guidePoints = [];
     this.connectedNodes = new Set();
     this.isUnlocked = false;
+    this.celebrationInterval = null;
 
     this.hintEl = document.getElementById('heart-hint-text');
     this.nextBtn = document.getElementById('heart-next-slide-btn');
@@ -279,14 +280,50 @@ class HeartCanvas {
       spawnPhrase(phrase, idx * 550);
     });
 
-    // Loop phrases and floating hearts continuously while on this slide
+    // Start recurring celebration loop
+    this.resumeCelebration();
+  }
+
+  pauseCelebration() {
+    if (this.celebrationInterval) {
+      clearInterval(this.celebrationInterval);
+      this.celebrationInterval = null;
+    }
+  }
+
+  resumeCelebration() {
+    if (!this.isUnlocked || this.celebrationInterval) return;
+    const layer = document.getElementById('heart-celebration-layer');
+    if (!layer) return;
+
+    const phrases = [
+      "بحبك ❤️",
+      "خلاص بقى اتصالحي 🥺",
+      "بموت فيكي 🥰",
+      "وحشتيني أوي أوي أوي 🫂",
+      "وحشتيني 💖"
+    ];
+    const heartColors = ['#E11D48', '#F43F5E', '#FB7185', '#FDA4AF', '#BE123C'];
+
     let phraseLoopIdx = 0;
     this.celebrationInterval = setInterval(() => {
       if (!this.isUnlocked) return;
-      spawnPhrase(phrases[phraseLoopIdx % phrases.length], 0);
+
+      const p = phrases[phraseLoopIdx % phrases.length];
       phraseLoopIdx++;
 
-      // Also spawn a floating heart rising from bottom
+      const phraseEl = document.createElement('div');
+      phraseEl.className = 'celebration-phrase-item';
+      phraseEl.textContent = p;
+      phraseEl.style.left = `${22 + Math.random() * 54}%`;
+      phraseEl.style.top = `${48 + Math.random() * 26}%`;
+      phraseEl.style.setProperty('--rot-start', `${(Math.random() - 0.5) * 12}deg`);
+      phraseEl.style.setProperty('--rot-mid', `${(Math.random() - 0.5) * 8}deg`);
+      phraseEl.style.setProperty('--rot-end', `${(Math.random() - 0.5) * 10}deg`);
+      layer.appendChild(phraseEl);
+      setTimeout(() => phraseEl.remove(), 4900);
+
+      // Floating heart rising
       const fHeart = document.createElement('div');
       fHeart.className = 'celebration-heart-clone celebration-heart-float';
       const size = 24 + Math.random() * 40;
@@ -296,7 +333,7 @@ class HeartCanvas {
       fHeart.style.setProperty('--h-rot', `${(Math.random() - 0.5) * 40}deg`);
       layer.appendChild(fHeart);
       setTimeout(() => fHeart.remove(), 5600);
-    }, 1100);
+    }, 1200);
   }
 
   spawnParticles(x, y, count = 2, isCelebration = false) {

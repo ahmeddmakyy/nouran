@@ -360,10 +360,15 @@ html, body {
   }
 }
 
-/* Slide 2 Grand Heart Celebration Layer */
+/* Slide 2 Grand Heart Celebration Layer - strictly contained inside Slide 2 */
 #heart-celebration-layer {
-  background: transparent;
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
   pointer-events: none;
+  background: transparent;
 }
 
 .celebration-phrase-item {
@@ -435,12 +440,13 @@ html, body {
 }
 
 .celebration-heart-float {
+  top: 100%;
   animation: heartFloatAnim 5.5s linear forwards;
 }
 
 @keyframes heartFloatAnim {
   0% {
-    transform: translateY(105vh) scale(0.4) rotate(0deg);
+    transform: translateY(20px) scale(0.4) rotate(0deg);
     opacity: 0;
   }
   15% {
@@ -450,7 +456,7 @@ html, body {
     opacity: 0.85;
   }
   100% {
-    transform: translateY(-15vh) scale(1.1) rotate(var(--h-rot, 20deg));
+    transform: translateY(calc(-100vh - 80px)) scale(1.1) rotate(var(--h-rot, 20deg));
     opacity: 0;
   }
 }
@@ -482,4 +488,79 @@ html, body {
   0% { height: 6px; }
   50% { height: 26px; }
   100% { height: 10px; }
+}
+
+/* Real Tactile Switch & Chassis */
+.tactile-switch-panel {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: relative;
+}
+
+.chassis-screw {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #E2E8F0;
+  border: 1px solid #CBD5E1;
+  box-shadow: inset 0 1px 1px rgba(0,0,0,0.25);
+}
+
+.chassis-screw::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: #94A3B8;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.led-indicator {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.led-off {
+  background: #94A3B8;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+}
+
+.led-on {
+  background: #10B981;
+  box-shadow: 0 0 10px #10B981, 0 0 4px #34D399;
+}
+
+.switch-well {
+  background: #E2E8F0;
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.16), 0 1px 1px rgba(255, 255, 255, 0.8);
+  border: 1px solid #CBD5E1;
+}
+
+.tactile-button {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+  border: 2px solid #CBD5E1;
+  color: #1E293B;
+  box-shadow: 0 6px 0 #94A3B8, 0 10px 18px rgba(0, 0, 0, 0.12);
+  transform: translateY(0);
+  transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform, box-shadow;
+}
+
+.tactile-button:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #94A3B8, 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tactile-button.is-active {
+  background: linear-gradient(180deg, #FFF1F2 0%, #FFE4E6 100%);
+  border-color: #E11D48;
+  color: #BE123C;
+  transform: translateY(6px);
+  box-shadow: 0 0px 0 #BE123C, inset 0 2px 5px rgba(225, 29, 72, 0.2), 0 2px 8px rgba(225, 29, 72, 0.15);
 }

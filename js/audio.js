@@ -113,6 +113,30 @@ class SoundEngine {
     osc.stop(this.ctx.currentTime + 0.16);
   }
 
+  // Realistic mechanical tactile switch click
+  playSwitchClick(isOn = true) {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(isOn ? 420 : 280, t);
+    osc.frequency.exponentialRampToValueAtTime(70, t + 0.04);
+
+    gain.gain.setValueAtTime(0.3, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.05);
+  }
+
   // Victory fanfare for finale
   playFanfare() {
     if (this.isMuted) return;
@@ -305,8 +329,9 @@ class SpecialSoundPlayer {
     this.audio = document.getElementById('special-sound');
     this.btn = document.getElementById('special-sound-btn');
     this.btnText = document.getElementById('special-sound-btn-text');
-    this.iconPlay = this.btn ? this.btn.querySelector('.special-icon-play') : null;
-    this.iconPause = this.btn ? this.btn.querySelector('.special-icon-pause') : null;
+    this.led = document.getElementById('switch-led');
+    this.statusLabel = document.getElementById('switch-status-label');
+    this.icon = document.getElementById('switch-icon');
     this.waveBars = document.getElementById('special-wave-bars');
     this.progressBar = document.getElementById('special-sound-progress');
     this.curTimeEl = document.getElementById('special-sound-cur-time');
@@ -314,6 +339,7 @@ class SpecialSoundPlayer {
 
     this.isPlaying = false;
     this.wasBgMusicPlaying = false;
+    this.lastToggleTime = 0;
 
     this.initEvents();
   }
@@ -321,9 +347,23 @@ class SpecialSoundPlayer {
   initEvents() {
     if (!this.audio || !this.btn) return;
 
-    this.btn.addEventListener('click', () => {
+    try {
+      this.audio.load();
+    } catch (e) {}
+
+    const handleToggle = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      const now = Date.now();
+      if (now - this.lastToggleTime < 280) return; // Debounce 280ms
+      this.lastToggleTime = now;
       this.toggle();
-    });
+    };
+
+    this.btn.addEventListener('click', handleToggle);
+    this.btn.addEventListener('touchend', handleToggle);
 
     this.audio.addEventListener('timeupdate', () => {
       this.updateProgress();
@@ -337,41 +377,72 @@ class SpecialSoundPlayer {
   play() {
     if (!this.audio) return;
 
-    // 1. Automatically pause the main background music
+    // Play tactile mechanical switch snap
+    if (window.soundEngine) {
+      window.soundEngine.playSwitchClick(true);
+    }
+
+    // 1. Pause background music safely
     const bgAudio = document.getElementById('bg-music');
     if (bgAudio && !bgAudio.paused) {
       this.wasBgMusicPlaying = true;
-      if (window.musicPlayer) {
-        window.musicPlayer.pause();
-      } else {
-        bgAudio.pause();
-      }
+      try {
+        if (window.musicPlayer) {
+          window.musicPlayer.pause();
+        } else {
+          bgAudio.pause();
+        }
+      } catch (err) {}
     }
 
-    // 2. Play special sound
-    this.audio.play().then(() => {
+    // 2. Reset time if finished
+    if (this.audio.ended || this.audio.currentTime >= (this.audio.duration - 0.3)) {
+      this.audio.currentTime = 0;
+    }
+
+    // 3. Play special sound
+    const playPromise = this.audio.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        this.isPlaying = true;
+        this.updateUI();
+      }).catch(err => {
+        console.error("Special sound playback error:", err);
+        this.isPlaying = false;
+        this.updateUI();
+      });
+    } else {
       this.isPlaying = true;
       this.updateUI();
-    }).catch(err => {
-      console.log("Special sound playback error:", err);
-    });
+    }
   }
 
   pause(resumeBg = true) {
     if (!this.audio) return;
-    this.audio.pause();
+
+    // Play tactile mechanical switch snap
+    if (window.soundEngine) {
+      window.soundEngine.playSwitchClick(false);
+    }
+
+    try {
+      this.audio.pause();
+    } catch (e) {}
+
     this.isPlaying = false;
     this.updateUI();
 
-    // 3. Resume main background music if it was paused
+    // 4. Resume main background music if it was paused
     if (resumeBg && this.wasBgMusicPlaying) {
       const bgAudio = document.getElementById('bg-music');
       if (bgAudio) {
-        if (window.musicPlayer) {
-          window.musicPlayer.play();
-        } else {
-          bgAudio.play().catch(() => {});
-        }
+        try {
+          if (window.musicPlayer) {
+            window.musicPlayer.play();
+          } else {
+            bgAudio.play().catch(() => {});
+          }
+        } catch (e) {}
       }
       this.wasBgMusicPlaying = false;
     }
@@ -386,20 +457,29 @@ class SpecialSoundPlayer {
   }
 
   handleEnded() {
+    if (window.soundEngine) {
+      window.soundEngine.playSwitchClick(false);
+    }
+
     this.isPlaying = false;
     this.updateUI();
     if (this.progressBar) this.progressBar.style.width = '0%';
     if (this.curTimeEl) this.curTimeEl.textContent = '00:00';
+    try {
+      this.audio.currentTime = 0;
+    } catch (e) {}
 
     // When the sound ends, automatically resume main song where it paused
     if (this.wasBgMusicPlaying) {
       const bgAudio = document.getElementById('bg-music');
       if (bgAudio) {
-        if (window.musicPlayer) {
-          window.musicPlayer.play();
-        } else {
-          bgAudio.play().catch(() => {});
-        }
+        try {
+          if (window.musicPlayer) {
+            window.musicPlayer.play();
+          } else {
+            bgAudio.play().catch(() => {});
+          }
+        } catch (e) {}
       }
       this.wasBgMusicPlaying = false;
     }
@@ -410,13 +490,35 @@ class SpecialSoundPlayer {
   }
 
   updateUI() {
-    if (this.iconPlay && this.iconPause) {
-      this.iconPlay.style.display = this.isPlaying ? 'none' : 'block';
-      this.iconPause.style.display = this.isPlaying ? 'block' : 'none';
+    if (this.btn) {
+      if (this.isPlaying) {
+        this.btn.classList.add('is-active');
+      } else {
+        this.btn.classList.remove('is-active');
+      }
+    }
+
+    if (this.led) {
+      if (this.isPlaying) {
+        this.led.classList.remove('led-off');
+        this.led.classList.add('led-on');
+      } else {
+        this.led.classList.remove('led-on');
+        this.led.classList.add('led-off');
+      }
+    }
+
+    if (this.statusLabel) {
+      this.statusLabel.textContent = this.isPlaying ? 'ON' : 'OFF';
+      this.statusLabel.style.color = this.isPlaying ? '#10B981' : '#64748B';
+    }
+
+    if (this.icon) {
+      this.icon.textContent = this.isPlaying ? '⏹️' : '🔊';
     }
 
     if (this.btnText) {
-      this.btnText.textContent = this.isPlaying ? 'شغال أهو.. اسمعي 🎧' : 'دوس على الزرار دا 🎵';
+      this.btnText.textContent = this.isPlaying ? 'شغال.. اضغطي للإيقاف 🎧' : 'اضغطي هنا لتشغيل الصوت 🎵';
     }
 
     if (this.waveBars) {
